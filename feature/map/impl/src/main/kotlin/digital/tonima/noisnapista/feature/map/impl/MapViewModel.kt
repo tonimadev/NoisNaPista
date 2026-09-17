@@ -1,6 +1,7 @@
 package digital.tonima.noisnapista.feature.map.impl
 
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import digital.tonima.noisnapista.core.data.PotholeRepository
@@ -17,7 +18,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface MapUiEffect {
-    data class ShowMessage(val message: String) : MapUiEffect
+    data class ShowMessage(@StringRes val messageRes: Int) : MapUiEffect
 }
 
 @HiltViewModel
@@ -50,7 +51,7 @@ class MapViewModel @Inject constructor(
                 .onFailure { error ->
                     Log.e(TAG, "Failed to fetch community potholes", error)
                     if (notifyOnFailure) {
-                        _uiEffect.send(MapUiEffect.ShowMessage("Não foi possível atualizar os buracos da comunidade"))
+                        _uiEffect.send(MapUiEffect.ShowMessage(R.string.map_community_refresh_failed))
                     }
                 }
             // Keeps the previous list on failure — the device's own locally-detected potholes

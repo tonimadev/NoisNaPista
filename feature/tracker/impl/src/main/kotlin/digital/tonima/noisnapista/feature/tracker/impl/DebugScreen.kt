@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -90,13 +91,17 @@ fun DebugListScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Debug: Classificar Detecções", fontWeight = FontWeight.Bold) }
+                title = { Text(stringResource(R.string.debug_list_title), fontWeight = FontWeight.Bold) }
             )
         }
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             Text(
-                text = "${entries.size} detecção(ões) capturada(s) • ${countsByLabel[DetectionLabel.UNLABELED] ?: 0} não classificada(s)",
+                text = stringResource(
+                    R.string.debug_capture_summary_format,
+                    entries.size,
+                    countsByLabel[DetectionLabel.UNLABELED] ?: 0
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -110,13 +115,13 @@ fun DebugListScreen(
                 FilterChip(
                     selected = filter == null,
                     onClick = { filter = null },
-                    label = { Text("Todos (${entries.size})") }
+                    label = { Text(stringResource(R.string.debug_filter_all_format, entries.size)) }
                 )
                 DetectionLabel.entries.forEach { label ->
                     FilterChip(
                         selected = filter == label,
                         onClick = { filter = if (filter == label) null else label },
-                        label = { Text("${label.displayName} (${countsByLabel[label] ?: 0})") }
+                        label = { Text(stringResource(R.string.debug_filter_label_format, label.displayName, countsByLabel[label] ?: 0)) }
                     )
                 }
             }
@@ -126,7 +131,7 @@ fun DebugListScreen(
             if (visibleEntries.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        "Nenhuma detecção nesta categoria.",
+                        stringResource(R.string.debug_empty_category),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -168,14 +173,15 @@ private fun DebugListItem(entry: DetectionDebugEntry, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(dateFormat.format(Date(entry.pothole.timestamp)), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    "Severidade: %.1f m/s²  •  Pico: %s".format(
+                    stringResource(
+                        R.string.debug_severity_peak_format,
                         entry.pothole.severity,
-                        entry.peakAbsZ?.let { "%.1f m/s²".format(it) } ?: "—"
+                        entry.peakAbsZ?.let { stringResource(R.string.tracker_sensor_value_format, it) } ?: stringResource(R.string.common_placeholder_dash)
                     ),
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    entry.sensorWindow?.let { "${it.samples.size} amostras" } ?: "Aguardando captura...",
+                    entry.sensorWindow?.let { stringResource(R.string.debug_samples_count_format, it.samples.size) } ?: stringResource(R.string.debug_awaiting_capture),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -225,10 +231,10 @@ fun DebugDetailScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Classificar Detecção", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.debug_detail_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.common_back_cd))
                     }
                 }
             )
@@ -236,7 +242,7 @@ fun DebugDetailScreen(
     ) { innerPadding ->
         if (entry == null) {
             Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                Text("Detecção não encontrada (pode ter sido deletada).", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.debug_detection_not_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             return@Scaffold
         }
@@ -256,9 +262,10 @@ fun DebugDetailScreen(
             LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 item {
                     if (mapsApiKey != null) {
+                        val noMapsAppFoundMessage = stringResource(R.string.common_no_maps_app_found)
                         AsyncImage(
                             model = staticMapUrl(mapsApiKey, entry.pothole.location.latitude, entry.pothole.location.longitude),
-                            contentDescription = "Localização no mapa",
+                            contentDescription = stringResource(R.string.debug_map_location_cd),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -272,7 +279,7 @@ fun DebugDetailScreen(
                                     try {
                                         context.startActivity(Intent(Intent.ACTION_VIEW, uri))
                                     } catch (e: ActivityNotFoundException) {
-                                        Toast.makeText(context, "Nenhum app de mapas encontrado", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, noMapsAppFoundMessage, Toast.LENGTH_SHORT).show()
                                     }
                                 }
                         )
@@ -284,7 +291,7 @@ fun DebugDetailScreen(
                 item {
                     Column {
                         Text(
-                            "Janela do sensor (-2s a +1s do impacto)",
+                            stringResource(R.string.debug_sensor_window_title),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(bottom = 8.dp)
@@ -296,7 +303,7 @@ fun DebugDetailScreen(
                 item {
                     Column {
                         Text(
-                            "Classificação",
+                            stringResource(R.string.debug_classification_title),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(bottom = 8.dp)
@@ -320,7 +327,7 @@ fun DebugDetailScreen(
                     OutlinedTextField(
                         value = noteText,
                         onValueChange = { noteText = it },
-                        label = { Text("Observações (ex: \"buraco fundo depois da lombada\")") },
+                        label = { Text(stringResource(R.string.debug_note_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 2
                     )
@@ -334,15 +341,31 @@ fun DebugDetailScreen(
 private fun MetadataCard(entry: DetectionDebugEntry, dateText: String) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            MetadataRow("Data/hora", dateText)
-            MetadataRow("Localização", "%.6f, %.6f".format(entry.pothole.location.latitude, entry.pothole.location.longitude))
-            MetadataRow("Precisão GPS", "±%.1f m".format(entry.pothole.location.accuracy))
-            MetadataRow("Severidade no gatilho", "%.2f m/s²".format(entry.pothole.severity))
-            MetadataRow("Pico na janela", entry.peakAbsZ?.let { "%.2f m/s²".format(it) } ?: "—")
-            MetadataRow("Amostras capturadas", entry.sensorWindow?.samples?.size?.toString() ?: "aguardando...")
-            MetadataRow("Sincronização", if (entry.pothole.serverId != null) "Sincronizado" else "Aguardando sincronização")
-            if (entry.pothole.status != null) {
-                MetadataRow("Status no backend", "${entry.pothole.status} (${entry.pothole.distinctReporterCount} relato(s))")
+            MetadataRow(stringResource(R.string.debug_metadata_datetime), dateText)
+            MetadataRow(
+                stringResource(R.string.debug_metadata_location),
+                stringResource(R.string.debug_lat_lon_precise_format, entry.pothole.location.latitude, entry.pothole.location.longitude)
+            )
+            MetadataRow(stringResource(R.string.debug_metadata_accuracy), stringResource(R.string.debug_accuracy_format, entry.pothole.location.accuracy))
+            MetadataRow(stringResource(R.string.debug_metadata_trigger_severity), stringResource(R.string.debug_severity_format, entry.pothole.severity))
+            MetadataRow(
+                stringResource(R.string.debug_metadata_peak),
+                entry.peakAbsZ?.let { stringResource(R.string.debug_severity_format, it) } ?: stringResource(R.string.common_placeholder_dash)
+            )
+            MetadataRow(
+                stringResource(R.string.debug_metadata_sample_count),
+                entry.sensorWindow?.samples?.size?.toString() ?: stringResource(R.string.debug_awaiting_lowercase)
+            )
+            MetadataRow(
+                stringResource(R.string.debug_metadata_sync),
+                stringResource(if (entry.pothole.serverId != null) R.string.history_synced else R.string.history_pending_sync)
+            )
+            val backendStatus = entry.pothole.status
+            if (backendStatus != null) {
+                MetadataRow(
+                    stringResource(R.string.debug_metadata_backend_status),
+                    stringResource(R.string.debug_backend_status_format, backendStatus, entry.pothole.distinctReporterCount)
+                )
             }
         }
     }
@@ -373,7 +396,7 @@ private fun SensorWindowChart(samples: List<SensorWindowSample>, modifier: Modif
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
-            Text("Sem dados de sensor capturados", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.debug_no_sensor_data), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         return
     }
@@ -393,11 +416,11 @@ private fun SensorWindowChart(samples: List<SensorWindowSample>, modifier: Modif
 
     Column(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            ChartLegendDot(xColor, "X")
+            ChartLegendDot(xColor, stringResource(R.string.debug_axis_x))
             Spacer(modifier = Modifier.width(12.dp))
-            ChartLegendDot(yColor, "Y")
+            ChartLegendDot(yColor, stringResource(R.string.debug_axis_y))
             Spacer(modifier = Modifier.width(12.dp))
-            ChartLegendDot(zColor, "Z (eixo do impacto)")
+            ChartLegendDot(zColor, stringResource(R.string.debug_axis_z))
         }
         Spacer(modifier = Modifier.height(8.dp))
         Canvas(
@@ -440,9 +463,9 @@ private fun SensorWindowChart(samples: List<SensorWindowSample>, modifier: Modif
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("${minOffset.toInt()} ms", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("impacto", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("+${maxOffset.toInt()} ms", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.debug_chart_time_min_format, minOffset.toInt()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.debug_chart_impact_marker), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.debug_chart_time_max_format, maxOffset.toInt()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

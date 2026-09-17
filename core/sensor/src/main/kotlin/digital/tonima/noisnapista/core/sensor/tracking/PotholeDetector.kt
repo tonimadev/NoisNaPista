@@ -94,15 +94,23 @@ class PotholeDetector @Inject constructor(
                     val withinCooldown = lastTriggerNanos?.let { sample.timestampNanos - it < COOLDOWN_NANOS } == true
                     if (kotlin.math.abs(sample.z) > IMPACT_THRESHOLD && !withinCooldown) { // Limiar de impacto
                         _currentLocation.value?.let { location ->
-                            lastTriggerNanos = sample.timestampNanos
-                            val pothole = Pothole(
-                                id = UUID.randomUUID().toString(),
-                                location = location,
-                                severity = kotlin.math.abs(sample.z),
-                                timestamp = System.currentTimeMillis()
-                            )
-                            _potholes.emit(pothole)
-                            launch { captureWindow(pothole.id, sample.timestampNanos) }
+                            // Parado (celular sendo pego/manuseado, carro estacionado) gera o
+                            // mesmo pico de eixo Z que um buraco real — sem GPS indicando
+                            // movimento, esse impacto quase certamente não veio da pista. Um
+                            // fix sem leitura de velocidade (speed == null) não bloqueia a
+                            // detecção, para não perder buracos reais por falha pontual do GPS.
+                            val isStationary = location.speed?.let { it < MIN_SPEED_MPS } == true
+                            if (!isStationary) {
+                                lastTriggerNanos = sample.timestampNanos
+                                val pothole = Pothole(
+                                    id = UUID.randomUUID().toString(),
+                                    location = location,
+                                    severity = kotlin.math.abs(sample.z),
+                                    timestamp = System.currentTimeMillis()
+                                )
+                                _potholes.emit(pothole)
+                                launch { captureWindow(pothole.id, sample.timestampNanos) }
+                            }
                         }
                     }
                 }
@@ -151,6 +159,9 @@ class PotholeDetector @Inject constructor(
 
     private companion object {
         const val IMPACT_THRESHOLD = 15f
+        // ~5 km/h: acima do ruído típico de um fix de GPS parado, abaixo de qualquer velocidade
+        // real de condução — filtra o carro parado/celular manuseado sem cortar tráfego lento.
+        const val MIN_SPEED_MPS = 1.4f
         const val PRE_WINDOW_NANOS = 2_000_000_000L // 2s of context before the impact
         const val POST_WINDOW_MILLIS = 1_000L // 1s after the impact
         const val BUFFER_RETENTION_NANOS = PRE_WINDOW_NANOS + POST_WINDOW_MILLIS * 1_000_000L + 500_000_000L

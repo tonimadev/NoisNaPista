@@ -3,6 +3,7 @@ package digital.tonima.noisnapista.feature.tracker.impl
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,7 +43,7 @@ sealed interface TrackerUiIntent {
 }
 
 sealed interface TrackerUiEffect {
-    data class ShowError(val message: String) : TrackerUiEffect
+    data class ShowError(@StringRes val messageRes: Int) : TrackerUiEffect
     data class NavigateTo(val route: String) : TrackerUiEffect
 }
 
@@ -116,7 +117,7 @@ class TrackerViewModel @Inject constructor(
     private fun startTracking() {
         if (!_uiState.value.locationPermissionGranted) {
             viewModelScope.launch {
-                _uiEffect.send(TrackerUiEffect.ShowError("Permissão de localização necessária"))
+                _uiEffect.send(TrackerUiEffect.ShowError(R.string.tracker_location_permission_required))
             }
             return
         }

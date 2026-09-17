@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -108,7 +109,7 @@ fun TrackerScreen(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is TrackerUiEffect.ShowError -> {
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(effect.messageRes), Toast.LENGTH_SHORT).show()
                 }
                 is TrackerUiEffect.NavigateTo -> {
                     // TODO: Implement navigation if needed
@@ -130,9 +131,9 @@ fun TrackerScreen(
                         )
                         Spacer(modifier = Modifier.size(8.dp))
                         Column {
-                            Text("NóisNaPista", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.tracker_app_title), fontWeight = FontWeight.Bold)
                             Text(
-                                "Buracos na Pista",
+                                stringResource(R.string.tracker_app_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -164,14 +165,14 @@ fun TrackerScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Sua Localização Atual:",
+                text = stringResource(R.string.tracker_current_location_label),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = uiState.currentLocation?.let {
-                    "Lat: %.5f, Lon: %.5f".format(it.latitude, it.longitude)
-                } ?: "Aguardando sinal de GPS...",
+                    stringResource(R.string.tracker_lat_lon_format, it.latitude, it.longitude)
+                } ?: stringResource(R.string.tracker_waiting_gps),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -198,7 +199,7 @@ fun TrackerScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Atividade Recente",
+                text = stringResource(R.string.tracker_recent_activity_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
@@ -219,23 +220,23 @@ private fun StatusRow(isTracking: Boolean) {
 
     Row {
         Text(
-            text = "GPS: ",
+            text = stringResource(R.string.tracker_gps_label),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = if (isTracking) "Ativo" else "Inativo",
+            text = stringResource(if (isTracking) R.string.tracker_gps_active else R.string.tracker_gps_inactive),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = statusColor
         )
         Text(
-            text = "  |  Sensores de Movimento: ",
+            text = stringResource(R.string.tracker_sensors_label),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = if (isTracking) "Ligados" else "Desligados",
+            text = stringResource(if (isTracking) R.string.tracker_sensors_on else R.string.tracker_sensors_off),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = statusColor
@@ -272,15 +273,15 @@ private fun SensorIntensityBar(intensity: Float, isTracking: Boolean) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Leitura do Sensor (Z)",
+                text = stringResource(R.string.tracker_sensor_reading_label),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = when {
-                    !isTracking -> "—"
-                    intensity >= IMPACT_THRESHOLD -> "IMPACTO!"
-                    else -> "%.1f m/s²".format(intensity)
+                    !isTracking -> stringResource(R.string.common_placeholder_dash)
+                    intensity >= IMPACT_THRESHOLD -> stringResource(R.string.tracker_impact_label)
+                    else -> stringResource(R.string.tracker_sensor_value_format, intensity)
                 },
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
@@ -308,6 +309,7 @@ private fun SensorIntensityBar(intensity: Float, isTracking: Boolean) {
 
 @Composable
 private fun HomeMap(potholes: List<Pothole>, currentLocation: LocationPoint?) {
+    val youAreHereLabel = stringResource(R.string.tracker_marker_you_are_here)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(SAO_PAULO, 14f)
     }
@@ -336,7 +338,7 @@ private fun HomeMap(potholes: List<Pothole>, currentLocation: LocationPoint?) {
             currentLocation?.let {
                 Marker(
                     state = rememberUpdatedMarkerState(position = LatLng(it.latitude, it.longitude)),
-                    title = "Você está aqui",
+                    title = youAreHereLabel,
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
                 )
             }
@@ -350,7 +352,7 @@ private fun HomeMap(potholes: List<Pothole>, currentLocation: LocationPoint?) {
                     state = rememberUpdatedMarkerState(
                         position = LatLng(pothole.location.latitude, pothole.location.longitude)
                     ),
-                    title = "Buraco - Severidade: ${pothole.severity}",
+                    title = stringResource(R.string.tracker_marker_pothole_severity_format, pothole.severity.toString()),
                     icon = BitmapDescriptorFactory.defaultMarker(hue)
                 )
             }
@@ -368,7 +370,10 @@ private fun TrackingButton(isTracking: Boolean, onClick: () -> Unit) {
             contentColor = if (isTracking) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
         )
     ) {
-        Text(if (isTracking) "Parar Rastreamento" else "Iniciar Rastreamento", fontWeight = FontWeight.Bold)
+        Text(
+            stringResource(if (isTracking) R.string.tracker_stop_button else R.string.tracker_start_button),
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -376,7 +381,7 @@ private fun TrackingButton(isTracking: Boolean, onClick: () -> Unit) {
 private fun RecentActivityList(potholes: List<Pothole>) {
     if (potholes.isEmpty()) {
         Text(
-            "Nenhum buraco detectado até o momento.",
+            stringResource(R.string.common_no_pothole_detected),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -402,7 +407,9 @@ private fun RecentActivityList(potholes: List<Pothole>) {
                     )
                     Spacer(modifier = Modifier.size(12.dp))
                     Text(
-                        text = "${timeFormat.format(Date(pothole.timestamp))} - Lat: %.4f, Lon: %.4f".format(
+                        text = stringResource(
+                            R.string.tracker_recent_item_format,
+                            timeFormat.format(Date(pothole.timestamp)),
                             pothole.location.latitude,
                             pothole.location.longitude
                         ),

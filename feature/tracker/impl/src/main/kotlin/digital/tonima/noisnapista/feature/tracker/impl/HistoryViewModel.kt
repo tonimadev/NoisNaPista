@@ -1,5 +1,6 @@
 package digital.tonima.noisnapista.feature.tracker.impl
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +24,7 @@ sealed interface HistoryUiIntent {
 }
 
 sealed interface HistoryUiEffect {
-    data class ShowMessage(val message: String) : HistoryUiEffect
+    data class ShowMessage(@StringRes val messageRes: Int) : HistoryUiEffect
 }
 
 @HiltViewModel
@@ -66,12 +67,12 @@ class HistoryViewModel @Inject constructor(
                     replaceInCommunityList(updated)
                     _uiEffect.send(
                         HistoryUiEffect.ShowMessage(
-                            if (updated.status == "FIXED") "Buraco marcado como corrigido!" else "Voto registrado"
+                            if (updated.status == "FIXED") R.string.history_vote_marked_fixed else R.string.history_vote_registered
                         )
                     )
                 }
                 .onFailure {
-                    _uiEffect.send(HistoryUiEffect.ShowMessage("Não foi possível votar agora. Tente novamente."))
+                    _uiEffect.send(HistoryUiEffect.ShowMessage(R.string.history_vote_failed))
                 }
         }
     }
@@ -82,7 +83,7 @@ class HistoryViewModel @Inject constructor(
                 .onSuccess { _communityPotholes.value = it }
                 .onFailure {
                     if (notifyOnFailure) {
-                        _uiEffect.send(HistoryUiEffect.ShowMessage("Não foi possível atualizar os buracos da comunidade"))
+                        _uiEffect.send(HistoryUiEffect.ShowMessage(R.string.history_community_refresh_failed))
                     }
                 }
         }

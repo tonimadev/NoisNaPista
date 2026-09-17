@@ -14,6 +14,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -31,6 +33,7 @@ fun MapScreen(
 ) {
     val potholes by viewModel.potholes.collectAsStateWithLifecycle()
     val communityPotholes by viewModel.communityPotholes.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(-23.5505, -46.6333), 10f)
     }
@@ -39,7 +42,7 @@ fun MapScreen(
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
-                is MapUiEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
+                is MapUiEffect.ShowMessage -> snackbarHostState.showSnackbar(context.getString(effect.messageRes))
             }
         }
     }
@@ -49,10 +52,11 @@ fun MapScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = { viewModel.refreshCommunityPotholes() }) {
-                Icon(Icons.Rounded.Refresh, contentDescription = "Atualizar buracos da comunidade")
+                Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.map_refresh_community_cd))
             }
         }
     ) { padding ->
+        val pendingStatusFallback = stringResource(R.string.map_status_pending_fallback)
         GoogleMap(
             modifier = Modifier
                 .fillMaxSize()
@@ -62,16 +66,16 @@ fun MapScreen(
             potholes.forEach { pothole ->
                 Marker(
                     state = rememberUpdatedMarkerState(position = LatLng(pothole.location.latitude, pothole.location.longitude)),
-                    title = "Buraco - Severidade: ${pothole.severity}",
-                    snippet = "Detectado em: ${Date(pothole.timestamp)}",
+                    title = stringResource(R.string.map_marker_own_format, pothole.severity.toString()),
+                    snippet = stringResource(R.string.map_marker_detected_at_format, Date(pothole.timestamp).toString()),
                     icon = BitmapDescriptorFactory.defaultMarker(severityHue(pothole.severity))
                 )
             }
             communityPotholes.forEach { pothole ->
                 Marker(
                     state = rememberUpdatedMarkerState(position = LatLng(pothole.location.latitude, pothole.location.longitude)),
-                    title = "Buraco da comunidade (${pothole.status ?: "PENDING"})",
-                    snippet = "${pothole.distinctReporterCount} relato(s) independente(s)",
+                    title = stringResource(R.string.map_marker_community_format, pothole.status ?: pendingStatusFallback),
+                    snippet = stringResource(R.string.map_report_count_format, pothole.distinctReporterCount),
                     // Violet marks these as community-sourced pins, distinct from this device's own detections.
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)
                 )

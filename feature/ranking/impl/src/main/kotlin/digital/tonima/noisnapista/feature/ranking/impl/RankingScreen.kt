@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,7 +72,7 @@ fun RankingScreen(
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
-                is RankingUiEffect.ShowMessage -> Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                is RankingUiEffect.ShowMessage -> Toast.makeText(context, context.getString(effect.messageRes), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -79,7 +80,7 @@ fun RankingScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(title = { Text("Ranking de Cidades", fontWeight = FontWeight.Bold) })
+            TopAppBar(title = { Text(stringResource(R.string.ranking_title), fontWeight = FontWeight.Bold) })
         }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
@@ -128,7 +129,7 @@ fun RankingScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item(key = "top-header") {
-                    SectionLabel("Mais $metricLabel")
+                    SectionLabel(stringResource(R.string.ranking_top_header_format, metricLabel))
                 }
                 items(uiState.top, key = { "top-${it.ibgeCode}" }) { city ->
                     CityRankingRow(city = city, metric = uiState.sortBy, isMyCity = city.ibgeCode == uiState.myCity?.ibgeCode)
@@ -136,7 +137,7 @@ fun RankingScreen(
 
                 if (uiState.bottom.isNotEmpty()) {
                     item(key = "bottom-header") {
-                        SectionLabel("Menos $metricLabel")
+                        SectionLabel(stringResource(R.string.ranking_bottom_header_format, metricLabel))
                     }
                     items(uiState.bottom, key = { "bottom-${it.ibgeCode}" }) { city ->
                         CityRankingRow(city = city, metric = uiState.sortBy, isMyCity = city.ibgeCode == uiState.myCity?.ibgeCode)
@@ -146,7 +147,7 @@ fun RankingScreen(
                 if (uiState.top.isEmpty() && !uiState.isLoading) {
                     item(key = "empty") {
                         Text(
-                            "Nenhuma cidade com buracos registrados ainda.",
+                            stringResource(R.string.ranking_empty),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -198,7 +199,7 @@ private fun MyCityCard(
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    "Minha Cidade",
+                    stringResource(R.string.ranking_my_city_title),
                     modifier = Modifier.padding(start = 8.dp),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
@@ -212,26 +213,23 @@ private fun MyCityCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp), strokeWidth = 2.dp)
-                    Text("Localizando...", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text(stringResource(R.string.ranking_locating), color = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
 
                 myCity == null -> TextButton(onClick = onFindMyCity) {
-                    Text("Ver minha cidade")
+                    Text(stringResource(R.string.ranking_view_my_city_button))
                 }
 
                 else -> {
                     Text(
-                        "${myCity.name} - ${myCity.state}",
+                        stringResource(R.string.ranking_city_name_state_format, myCity.name, myCity.state),
                         modifier = Modifier.padding(top = 8.dp),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
-                        text = if (myCity.rank != null) {
-                            "Posição ${myCity.rank}ª de $totalCities cidade(s)"
-                        } else {
-                            "Ainda sem buracos registrados nessa métrica"
-                        },
+                        text = myCity.rank?.let { stringResource(R.string.ranking_my_city_rank_format, it, totalCities) }
+                            ?: stringResource(R.string.ranking_no_potholes_metric),
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
@@ -241,9 +239,9 @@ private fun MyCityCard(
                     )
                     Row(modifier = Modifier.padding(top = 4.dp)) {
                         if (canScrollToRow) {
-                            TextButton(onClick = onScrollToRow) { Text("Ver na lista") }
+                            TextButton(onClick = onScrollToRow) { Text(stringResource(R.string.ranking_view_in_list_button)) }
                         }
-                        TextButton(onClick = onFindMyCity) { Text("Atualizar") }
+                        TextButton(onClick = onFindMyCity) { Text(stringResource(R.string.ranking_refresh_button)) }
                     }
                 }
             }
@@ -277,13 +275,13 @@ private fun CityRankingRow(city: CityRanking, metric: CityRankingSortBy, isMyCit
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = city.rank?.let { "#$it" } ?: "-",
+                text = city.rank?.let { stringResource(R.string.ranking_rank_format, it) } ?: stringResource(R.string.ranking_rank_placeholder),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(end = 12.dp)
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text("${city.name} - ${city.state}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ranking_city_name_state_format, city.name, city.state), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                 Text(city.summaryLine(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(
@@ -295,8 +293,9 @@ private fun CityRankingRow(city: CityRanking, metric: CityRankingSortBy, isMyCit
     }
 }
 
+@Composable
 private fun CityRanking.summaryLine(): String =
-    "$totalPotholes buraco(s) • $fixedPotholes corrigido(s) • $recurrenceCount reincidência(s)"
+    stringResource(R.string.ranking_summary_format, totalPotholes, fixedPotholes, recurrenceCount)
 
 private fun CityRanking.highlightedValue(metric: CityRankingSortBy): Long = when (metric) {
     CityRankingSortBy.POTHOLES -> totalPotholes
@@ -304,14 +303,16 @@ private fun CityRanking.highlightedValue(metric: CityRankingSortBy): Long = when
     CityRankingSortBy.RECURRENCE -> recurrenceCount
 }
 
+@Composable
 private fun CityRankingSortBy.chipLabel(): String = when (this) {
-    CityRankingSortBy.POTHOLES -> "Buracos"
-    CityRankingSortBy.FIXED -> "Corrigidos"
-    CityRankingSortBy.RECURRENCE -> "Reincidências"
+    CityRankingSortBy.POTHOLES -> stringResource(R.string.ranking_metric_potholes)
+    CityRankingSortBy.FIXED -> stringResource(R.string.ranking_metric_fixed)
+    CityRankingSortBy.RECURRENCE -> stringResource(R.string.ranking_metric_recurrence)
 }
 
+@Composable
 private fun CityRankingSortBy.metricLabel(): String = when (this) {
-    CityRankingSortBy.POTHOLES -> "buracos"
-    CityRankingSortBy.FIXED -> "corrigidos"
-    CityRankingSortBy.RECURRENCE -> "reincidências"
+    CityRankingSortBy.POTHOLES -> stringResource(R.string.ranking_metric_potholes_lower)
+    CityRankingSortBy.FIXED -> stringResource(R.string.ranking_metric_fixed_lower)
+    CityRankingSortBy.RECURRENCE -> stringResource(R.string.ranking_metric_recurrence_lower)
 }

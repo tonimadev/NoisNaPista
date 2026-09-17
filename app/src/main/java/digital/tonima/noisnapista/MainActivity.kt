@@ -18,8 +18,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
@@ -41,6 +45,8 @@ import digital.tonima.noisnapista.feature.tracker.impl.TrackerScreen
 import digital.tonima.noisnapista.feature.map.bridge.MapNavKey
 import digital.tonima.noisnapista.feature.map.impl.MapScreen
 import digital.tonima.noisnapista.feature.map.impl.MapViewModel
+import digital.tonima.noisnapista.feature.onboarding.OnboardingScreen
+import digital.tonima.noisnapista.feature.onboarding.OnboardingViewModel
 import digital.tonima.noisnapista.feature.ranking.bridge.RankingNavKey
 import digital.tonima.noisnapista.feature.ranking.impl.RankingScreen
 import digital.tonima.noisnapista.feature.ranking.impl.RankingViewModel
@@ -57,142 +63,156 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val backStack = rememberNavBackStack(TrackerNavKey)
-                    val currentKey = backStack.lastOrNull() ?: TrackerNavKey
-                    val adaptiveInfo = currentWindowAdaptiveInfo()
-                    val isExpanded = adaptiveInfo.windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED
+                    val onboardingViewModel: OnboardingViewModel = hiltViewModel()
+                    val hasCompletedOnboarding by onboardingViewModel.hasCompletedOnboarding.collectAsStateWithLifecycle()
 
-                    NavigationSuiteScaffold(
-                        navigationSuiteItems = {
-                            item(
-                                icon = { Icon(Icons.Rounded.DirectionsCar, contentDescription = "Home") },
-                                label = { Text("Home") },
-                                selected = currentKey is TrackerNavKey,
-                                onClick = {
-                                    if (currentKey !is TrackerNavKey) {
-                                        backStack.clear()
-                                        backStack.add(TrackerNavKey)
-                                    }
-                                }
-                            )
-                            item(
-                                icon = { Icon(Icons.Rounded.Map, contentDescription = "Mapa") },
-                                label = { Text("Mapa") },
-                                selected = currentKey is MapNavKey,
-                                onClick = {
-                                    if (currentKey !is MapNavKey) {
-                                        backStack.clear()
-                                        backStack.add(MapNavKey)
-                                    }
-                                }
-                            )
-                            item(
-                                icon = { Icon(Icons.Rounded.History, contentDescription = "Histórico") },
-                                label = { Text("Histórico") },
-                                selected = currentKey is HistoryNavKey,
-                                onClick = {
-                                    if (currentKey !is HistoryNavKey) {
-                                        backStack.clear()
-                                        backStack.add(HistoryNavKey)
-                                    }
-                                }
-                            )
-                            item(
-                                icon = { Icon(Icons.Rounded.Leaderboard, contentDescription = "Ranking") },
-                                label = { Text("Ranking") },
-                                selected = currentKey is RankingNavKey,
-                                onClick = {
-                                    if (currentKey !is RankingNavKey) {
-                                        backStack.clear()
-                                        backStack.add(RankingNavKey)
-                                    }
-                                }
-                            )
-                            // Debug-only: a detailed per-detection view for classifying captured
-                            // sensor data (ML labeling). Must never appear in a release build.
-                            if (BuildConfig.DEBUG) {
-                                item(
-                                    icon = { Icon(Icons.Rounded.BugReport, contentDescription = "Debug") },
-                                    label = { Text("Debug") },
-                                    selected = currentKey is DebugNavKey || currentKey is DebugDetailNavKey,
-                                    onClick = {
-                                        if (currentKey !is DebugNavKey) {
-                                            backStack.clear()
-                                            backStack.add(DebugNavKey)
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    ) {
-                        if (isExpanded && currentKey is TrackerNavKey) {
-                            Row(modifier = Modifier.fillMaxSize()) {
-                                TrackerScreen(
-                                    viewModel = hiltViewModel(),
-                                    onNavigateToMap = {
-                                        backStack.clear()
-                                        backStack.add(MapNavKey)
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                )
-                                MapScreen(
-                                    viewModel = hiltViewModel<MapViewModel>(),
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                        } else {
-                            NavDisplay(
-                                backStack = backStack,
-                                onBack = { backStack.removeLastOrNull() },
-                                entryDecorators = listOf(
-                                    rememberSaveableStateHolderNavEntryDecorator(),
-                                    rememberViewModelStoreNavEntryDecorator()
-                                ),
-                                entryProvider = { key: NavKey ->
-                                    when (key) {
-                                        is TrackerNavKey -> NavEntry(key) {
-                                            TrackerScreen(
-                                                viewModel = hiltViewModel(),
-                                                onNavigateToMap = {
-                                                    backStack.clear()
-                                                    backStack.add(MapNavKey)
-                                                }
-                                            )
-                                        }
-                                        is MapNavKey -> NavEntry(key) {
-                                            MapScreen(viewModel = hiltViewModel<MapViewModel>())
-                                        }
-                                        is HistoryNavKey -> NavEntry(key) {
-                                            HistoryScreen(viewModel = hiltViewModel<HistoryViewModel>())
-                                        }
-                                        is RankingNavKey -> NavEntry(key) {
-                                            RankingScreen(viewModel = hiltViewModel<RankingViewModel>())
-                                        }
-                                        is DebugNavKey -> NavEntry(key) {
-                                            DebugListScreen(
-                                                viewModel = hiltViewModel<DebugViewModel>(),
-                                                onOpenDetail = { potholeId ->
-                                                    backStack.add(DebugDetailNavKey(potholeId))
-                                                }
-                                            )
-                                        }
-                                        is DebugDetailNavKey -> NavEntry(key) {
-                                            DebugDetailScreen(
-                                                viewModel = hiltViewModel<DebugViewModel>(),
-                                                potholeId = key.potholeId,
-                                                onBack = { backStack.removeLastOrNull() }
-                                            )
-                                        }
-                                        else -> NavEntry(key) {
-                                            // Fallback
-                                        }
-                                    }
-                                }
-                            )
-                        }
+                    when (hasCompletedOnboarding) {
+                        // Ainda lendo o DataStore — não renderiza nada por um frame em vez de
+                        // arriscar mostrar a onboarding pra quem já passou por ela antes.
+                        null -> Unit
+                        false -> OnboardingScreen(onFinish = onboardingViewModel::onOnboardingFinished)
+                        true -> MainContent()
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun MainContent() {
+    val backStack = rememberNavBackStack(TrackerNavKey)
+    val currentKey = backStack.lastOrNull() ?: TrackerNavKey
+    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val isExpanded = adaptiveInfo.windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED
+
+    NavigationSuiteScaffold(
+        navigationSuiteItems = {
+            item(
+                icon = { Icon(Icons.Rounded.DirectionsCar, contentDescription = stringResource(R.string.nav_home)) },
+                label = { Text(stringResource(R.string.nav_home)) },
+                selected = currentKey is TrackerNavKey,
+                onClick = {
+                    if (currentKey !is TrackerNavKey) {
+                        backStack.clear()
+                        backStack.add(TrackerNavKey)
+                    }
+                }
+            )
+            item(
+                icon = { Icon(Icons.Rounded.Map, contentDescription = stringResource(R.string.nav_map)) },
+                label = { Text(stringResource(R.string.nav_map)) },
+                selected = currentKey is MapNavKey,
+                onClick = {
+                    if (currentKey !is MapNavKey) {
+                        backStack.clear()
+                        backStack.add(MapNavKey)
+                    }
+                }
+            )
+            item(
+                icon = { Icon(Icons.Rounded.History, contentDescription = stringResource(R.string.nav_history)) },
+                label = { Text(stringResource(R.string.nav_history)) },
+                selected = currentKey is HistoryNavKey,
+                onClick = {
+                    if (currentKey !is HistoryNavKey) {
+                        backStack.clear()
+                        backStack.add(HistoryNavKey)
+                    }
+                }
+            )
+            item(
+                icon = { Icon(Icons.Rounded.Leaderboard, contentDescription = stringResource(R.string.nav_ranking)) },
+                label = { Text(stringResource(R.string.nav_ranking)) },
+                selected = currentKey is RankingNavKey,
+                onClick = {
+                    if (currentKey !is RankingNavKey) {
+                        backStack.clear()
+                        backStack.add(RankingNavKey)
+                    }
+                }
+            )
+            // Debug-only: a detailed per-detection view for classifying captured
+            // sensor data (ML labeling). Must never appear in a release build.
+            if (BuildConfig.DEBUG) {
+                item(
+                    icon = { Icon(Icons.Rounded.BugReport, contentDescription = stringResource(R.string.nav_debug)) },
+                    label = { Text(stringResource(R.string.nav_debug)) },
+                    selected = currentKey is DebugNavKey || currentKey is DebugDetailNavKey,
+                    onClick = {
+                        if (currentKey !is DebugNavKey) {
+                            backStack.clear()
+                            backStack.add(DebugNavKey)
+                        }
+                    }
+                )
+            }
+        }
+    ) {
+        if (isExpanded && currentKey is TrackerNavKey) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                TrackerScreen(
+                    viewModel = hiltViewModel(),
+                    onNavigateToMap = {
+                        backStack.clear()
+                        backStack.add(MapNavKey)
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+                MapScreen(
+                    viewModel = hiltViewModel<MapViewModel>(),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        } else {
+            NavDisplay(
+                backStack = backStack,
+                onBack = { backStack.removeLastOrNull() },
+                entryDecorators = listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator()
+                ),
+                entryProvider = { key: NavKey ->
+                    when (key) {
+                        is TrackerNavKey -> NavEntry(key) {
+                            TrackerScreen(
+                                viewModel = hiltViewModel(),
+                                onNavigateToMap = {
+                                    backStack.clear()
+                                    backStack.add(MapNavKey)
+                                }
+                            )
+                        }
+                        is MapNavKey -> NavEntry(key) {
+                            MapScreen(viewModel = hiltViewModel<MapViewModel>())
+                        }
+                        is HistoryNavKey -> NavEntry(key) {
+                            HistoryScreen(viewModel = hiltViewModel<HistoryViewModel>())
+                        }
+                        is RankingNavKey -> NavEntry(key) {
+                            RankingScreen(viewModel = hiltViewModel<RankingViewModel>())
+                        }
+                        is DebugNavKey -> NavEntry(key) {
+                            DebugListScreen(
+                                viewModel = hiltViewModel<DebugViewModel>(),
+                                onOpenDetail = { potholeId ->
+                                    backStack.add(DebugDetailNavKey(potholeId))
+                                }
+                            )
+                        }
+                        is DebugDetailNavKey -> NavEntry(key) {
+                            DebugDetailScreen(
+                                viewModel = hiltViewModel<DebugViewModel>(),
+                                potholeId = key.potholeId,
+                                onBack = { backStack.removeLastOrNull() }
+                            )
+                        }
+                        else -> NavEntry(key) {
+                            // Fallback
+                        }
+                    }
+                }
+            )
         }
     }
 }

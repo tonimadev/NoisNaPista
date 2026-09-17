@@ -1,0 +1,14 @@
+<resources>
+    <string name="onboarding_skip">Pular</string>
+    <string name="onboarding_next">Próximo</string>
+    <string name="onboarding_start">Começar</string>
+
+    <string name="onboarding_page1_title">Mapeado por quem dirige</string>
+    <string name="onboarding_page1_description">O NóisNaPista é colaborativo: cada motorista que usa o app ajuda a construir, em tempo real, um mapa de buracos para toda a comunidade.</string>
+
+    <string name="onboarding_page2_title">Detecção automática</string>
+    <string name="onboarding_page2_description">Enquanto você dirige, o app usa o acelerômetro do celular para sentir impactos na pista e o GPS para marcar exatamente onde aconteceram — tudo em segundo plano, sem precisar tocar na tela.</string>
+
+    <string name="onboarding_page3_title">Sem identificação pessoal</string>
+    <string name="onboarding_page3_description">Os relatos são anônimos: o que importa é a localização do buraco, não quem reportou. Sua contribuição entra automaticamente no mapa que todo mundo vê.</string>
+</resources>

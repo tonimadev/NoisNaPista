@@ -52,6 +52,7 @@ dependencies {
     implementation(project(":core:sensor"))
     implementation(project(":feature:tracker:bridge"))
     implementation(project(":feature:tracker:impl"))
+    implementation(project(":feature:onboarding"))
     implementation(project(":feature:map:bridge"))
     implementation(project(":feature:map:impl"))
     implementation(project(":feature:ranking:bridge"))

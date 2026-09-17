@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -66,7 +67,7 @@ fun HistoryScreen(
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
-                is HistoryUiEffect.ShowMessage -> Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                is HistoryUiEffect.ShowMessage -> Toast.makeText(context, context.getString(effect.messageRes), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -75,7 +76,7 @@ fun HistoryScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Histórico de Detecções", fontWeight = FontWeight.Bold) }
+                title = { Text(stringResource(R.string.history_title), fontWeight = FontWeight.Bold) }
             )
         }
     ) { innerPadding ->
@@ -94,7 +95,7 @@ fun HistoryScreen(
             if (potholes.isEmpty()) {
                 item(key = "local-empty") {
                     Text(
-                        "Nenhum buraco detectado até o momento.",
+                        stringResource(R.string.common_no_pothole_detected),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -118,16 +119,16 @@ fun HistoryScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Comunidade", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.history_community_header), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     TextButton(onClick = { viewModel.onIntent(HistoryUiIntent.RefreshCommunity) }) {
-                        Text("Atualizar")
+                        Text(stringResource(R.string.common_refresh))
                     }
                 }
             }
             if (communityPotholes.isEmpty()) {
                 item(key = "community-empty") {
                     Text(
-                        "Nenhum buraco da comunidade por perto.",
+                        stringResource(R.string.history_community_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -180,7 +181,7 @@ private fun HistoryItem(
                 )
                 Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
                     Text(
-                        text = if (pothole.isFalseAlarm) "Alarme Falso" else "Buraco Detectado",
+                        text = stringResource(if (pothole.isFalseAlarm) R.string.history_false_alarm_label else R.string.history_pothole_detected_label),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         textDecoration = if (pothole.isFalseAlarm) TextDecoration.LineThrough else null
@@ -190,11 +191,11 @@ private fun HistoryItem(
                         style = MaterialTheme.typography.bodySmall
                     )
                     Text(
-                        text = "Lat: %.5f, Lon: %.5f".format(pothole.location.latitude, pothole.location.longitude),
+                        text = stringResource(R.string.tracker_lat_lon_format, pothole.location.latitude, pothole.location.longitude),
                         style = MaterialTheme.typography.bodySmall
                     )
                     Text(
-                        text = if (pothole.serverId != null) "Sincronizado" else "Aguardando sincronização",
+                        text = stringResource(if (pothole.serverId != null) R.string.history_synced else R.string.history_pending_sync),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -203,7 +204,7 @@ private fun HistoryItem(
                     IconButton(onClick = onMarkFalseAlarm) {
                         Icon(
                             imageVector = Icons.Rounded.Report,
-                            contentDescription = "Marcar como alarme falso",
+                            contentDescription = stringResource(R.string.history_mark_false_alarm_cd),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -211,7 +212,7 @@ private fun HistoryItem(
                 IconButton(onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Rounded.Delete,
-                        contentDescription = "Deletar",
+                        contentDescription = stringResource(R.string.history_delete_cd),
                         tint = MaterialTheme.colorScheme.error
                     )
                 }
@@ -220,9 +221,10 @@ private fun HistoryItem(
             // A visual anchor to help recall "what was at this spot" when reviewing/labeling a
             // week's worth of detections later — tap to open the exact point in Google Maps.
             if (mapsApiKey != null) {
+                val noMapsAppFoundMessage = stringResource(R.string.common_no_maps_app_found)
                 AsyncImage(
                     model = staticMapUrl(mapsApiKey, pothole.location.latitude, pothole.location.longitude),
-                    contentDescription = "Localização do buraco no mapa",
+                    contentDescription = stringResource(R.string.history_map_thumbnail_cd),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -236,7 +238,7 @@ private fun HistoryItem(
                             try {
                                 context.startActivity(Intent(Intent.ACTION_VIEW, uri))
                             } catch (e: ActivityNotFoundException) {
-                                Toast.makeText(context, "Nenhum app de mapas encontrado", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, noMapsAppFoundMessage, Toast.LENGTH_SHORT).show()
                             }
                         }
                 )
@@ -264,16 +266,16 @@ private fun CommunityHistoryItem(
             )
             Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
                 Text(
-                    text = "Status: ${pothole.status ?: "PENDING"}",
+                    text = stringResource(R.string.history_community_status_format, pothole.status ?: stringResource(R.string.history_status_pending_fallback)),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${pothole.distinctReporterCount} relato(s) independente(s)",
+                    text = stringResource(R.string.history_report_count_format, pothole.distinctReporterCount),
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = "Lat: %.5f, Lon: %.5f".format(pothole.location.latitude, pothole.location.longitude),
+                    text = stringResource(R.string.tracker_lat_lon_format, pothole.location.latitude, pothole.location.longitude),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -281,7 +283,7 @@ private fun CommunityHistoryItem(
                 IconButton(onClick = onVoteFixed) {
                     Icon(
                         imageVector = Icons.Rounded.CheckCircle,
-                        contentDescription = "Votar que foi corrigido",
+                        contentDescription = stringResource(R.string.history_vote_fixed_cd),
                         tint = MaterialTheme.colorScheme.tertiary
                     )
                 }

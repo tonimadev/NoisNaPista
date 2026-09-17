@@ -32,8 +32,9 @@ class AndroidLocationProvider @Inject constructor(
 
         val callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
-                result.lastLocation?.let {
-                    trySend(LocationPoint(it.latitude, it.longitude, it.accuracy, it.time))
+                result.lastLocation?.let { location ->
+                    val speed = if (location.hasSpeed()) location.speed else null
+                    trySend(LocationPoint(location.latitude, location.longitude, location.accuracy, location.time, speed))
                 }
             }
         }
@@ -56,7 +57,10 @@ class AndroidLocationProvider @Inject constructor(
         try {
             client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationTokenSource.token)
                 .addOnSuccessListener { location ->
-                    val point = location?.let { LocationPoint(it.latitude, it.longitude, it.accuracy, it.time) }
+                    val point = location?.let {
+                        val speed = if (it.hasSpeed()) it.speed else null
+                        LocationPoint(it.latitude, it.longitude, it.accuracy, it.time, speed)
+                    }
                     if (continuation.isActive) continuation.resume(point)
                 }
                 .addOnFailureListener {

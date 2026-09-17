@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">NóisNaPista</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_map">Mapa</string>
+    <string name="nav_history">Histórico</string>
+    <string name="nav_ranking">Ranking</string>
+    <string name="nav_debug">Debug</string>
 </resources>

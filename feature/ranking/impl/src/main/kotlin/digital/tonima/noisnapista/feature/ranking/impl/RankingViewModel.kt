@@ -1,6 +1,7 @@
 package digital.tonima.noisnapista.feature.ranking.impl
 
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +31,7 @@ data class RankingUiState(
 )
 
 sealed interface RankingUiEffect {
-    data class ShowMessage(val message: String) : RankingUiEffect
+    data class ShowMessage(@StringRes val messageRes: Int) : RankingUiEffect
 }
 
 @HiltViewModel
@@ -77,7 +78,7 @@ class RankingViewModel @Inject constructor(
                 .onFailure { error ->
                     Log.e(TAG, "Failed to fetch city ranking", error)
                     if (notifyOnFailure) {
-                        _uiEffect.send(RankingUiEffect.ShowMessage("Não foi possível carregar o ranking de cidades"))
+                        _uiEffect.send(RankingUiEffect.ShowMessage(R.string.ranking_load_failed))
                     }
                 }
             _uiState.update { it.copy(isLoading = false) }
@@ -90,7 +91,7 @@ class RankingViewModel @Inject constructor(
             _uiState.update { it.copy(isLocatingMyCity = true) }
             val location = locationProvider.getCurrentLocation()
             if (location == null) {
-                _uiEffect.send(RankingUiEffect.ShowMessage("Não foi possível obter sua localização"))
+                _uiEffect.send(RankingUiEffect.ShowMessage(R.string.ranking_location_failed))
                 _uiState.update { it.copy(isLocatingMyCity = false) }
                 return@launch
             }
@@ -108,7 +109,7 @@ class RankingViewModel @Inject constructor(
                 .onFailure { error ->
                     Log.e(TAG, "Failed to resolve the user's city", error)
                     if (notifyOnFailure) {
-                        _uiEffect.send(RankingUiEffect.ShowMessage("Não foi possível identificar sua cidade"))
+                        _uiEffect.send(RankingUiEffect.ShowMessage(R.string.ranking_city_resolve_failed))
                     }
                 }
             _uiState.update { it.copy(isLocatingMyCity = false) }

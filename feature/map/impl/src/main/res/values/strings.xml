@@ -1,0 +1,9 @@
+<resources>
+    <string name="map_refresh_community_cd">Atualizar buracos da comunidade</string>
+    <string name="map_marker_own_format">Buraco - Severidade: %1$s</string>
+    <string name="map_marker_detected_at_format">Detectado em: %1$s</string>
+    <string name="map_marker_community_format">Buraco da comunidade (%1$s)</string>
+    <string name="map_status_pending_fallback">PENDING</string>
+    <string name="map_report_count_format">%1$d relato(s) independente(s)</string>
+    <string name="map_community_refresh_failed">Não foi possível atualizar os buracos da comunidade</string>
+</resources>
