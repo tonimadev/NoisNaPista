@@ -1,0 +1,4 @@
+<resources>
+
+    <style name="Theme.NóisNaPista" parent="Theme.MaterialComponents.Light" />
+</resources>

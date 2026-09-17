@@ -11,3 +11,9 @@ build/
 .cxx
 local.properties
 secrets.properties
+
+# Raw export from the device DB carries real GPS coordinates from actual drives — never commit it.
+ml/data/raw_export.json
+
+# Agent-internal scratch plan, not meant to be tracked (see .agent/.aiexclude).
+.agent/plan.md

@@ -1,0 +1,14 @@
+[
+  "peak_abs_z",
+  "peak_abs_x",
+  "peak_abs_y",
+  "peak_to_peak_z",
+  "rms_z",
+  "std_z",
+  "std_pre_z",
+  "std_post_z",
+  "peak_magnitude",
+  "mean_magnitude",
+  "jerk_max",
+  "peak_offset_ms"
+]
