@@ -157,7 +157,10 @@ private fun MainContent() {
                         backStack.clear()
                         backStack.add(MapNavKey)
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    // O mapa completo já aparece ao lado (MapScreen); sem isso, os dois painéis
+                    // mostravam o mesmo mapa duplicado em tamanhos diferentes.
+                    showEmbeddedMap = false
                 )
                 MapScreen(
                     viewModel = hiltViewModel<MapViewModel>(),

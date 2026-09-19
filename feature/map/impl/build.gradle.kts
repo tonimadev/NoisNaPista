@@ -23,6 +23,8 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:ui"))
     implementation(project(":core:data"))
+    implementation(project(":core:location"))
+    implementation(project(":core:sensor"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

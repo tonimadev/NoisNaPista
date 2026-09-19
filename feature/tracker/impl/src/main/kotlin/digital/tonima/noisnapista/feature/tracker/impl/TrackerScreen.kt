@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.LocationOn
@@ -34,7 +36,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,7 +73,11 @@ private val SAO_PAULO = LatLng(-23.5505, -46.6333)
 fun TrackerScreen(
     viewModel: TrackerViewModel,
     onNavigateToMap: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Falso no painel esquerdo do layout de tela expandida (ver MainActivity), onde o mapa
+    // completo já aparece ao lado em MapScreen — evitar duas cópias do mesmo mapa e usar o
+    // espaço liberado para o histórico de atividade recente.
+    showEmbeddedMap: Boolean = true
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -103,6 +111,27 @@ fun TrackerScreen(
                 notificationPermissionState?.status?.isGranted ?: true
             )
         )
+    }
+
+    // Um único toque em "Iniciar" deve bastar mesmo quando faltam duas permissões: o clique liga
+    // este flag e este efeito reage a cada permissão concedida, pedindo a próxima ou (quando não
+    // falta mais nenhuma) disparando o start de verdade — sem isso, cada permissão concedida só
+    // avançava um passo e exigia um novo clique manual do usuário para o passo seguinte.
+    var pendingStartAfterPermissions by remember { mutableStateOf(false) }
+    LaunchedEffect(
+        pendingStartAfterPermissions,
+        locationPermissionsState.allPermissionsGranted,
+        notificationPermissionState?.status?.isGranted
+    ) {
+        if (!pendingStartAfterPermissions) return@LaunchedEffect
+        if (!locationPermissionsState.allPermissionsGranted) {
+            locationPermissionsState.launchMultiplePermissionRequest()
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && notificationPermissionState?.status?.isGranted == false) {
+            notificationPermissionState.launchPermissionRequest()
+        } else {
+            pendingStartAfterPermissions = false
+            viewModel.onIntent(TrackerUiIntent.StartTracking)
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -157,12 +186,14 @@ fun TrackerScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            HomeMap(
-                potholes = uiState.detectedPotholes,
-                currentLocation = uiState.currentLocation
-            )
+            if (showEmbeddedMap) {
+                HomeMap(
+                    potholes = uiState.detectedPotholes,
+                    currentLocation = uiState.currentLocation
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             Text(
                 text = stringResource(R.string.tracker_current_location_label),
@@ -185,13 +216,7 @@ fun TrackerScreen(
                     if (uiState.isTracking) {
                         viewModel.onIntent(TrackerUiIntent.StopTracking)
                     } else {
-                        if (!locationPermissionsState.allPermissionsGranted) {
-                            locationPermissionsState.launchMultiplePermissionRequest()
-                        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && notificationPermissionState?.status?.isGranted == false) {
-                            notificationPermissionState.launchPermissionRequest()
-                        } else {
-                            viewModel.onIntent(TrackerUiIntent.StartTracking)
-                        }
+                        pendingStartAfterPermissions = true
                     }
                 }
             )
@@ -205,7 +230,10 @@ fun TrackerScreen(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
             )
 
-            RecentActivityList(potholes = uiState.detectedPotholes.take(5))
+            RecentActivityList(
+                potholes = uiState.detectedPotholes,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -378,10 +406,11 @@ private fun TrackingButton(isTracking: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun RecentActivityList(potholes: List<Pothole>) {
+private fun RecentActivityList(potholes: List<Pothole>, modifier: Modifier = Modifier) {
     if (potholes.isEmpty()) {
         Text(
             stringResource(R.string.common_no_pothole_detected),
+            modifier = modifier,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -390,8 +419,11 @@ private fun RecentActivityList(potholes: List<Pothole>) {
 
     val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.forLanguageTag("pt-BR")) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        potholes.forEach { pothole ->
+    LazyColumn(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(potholes, key = { it.id }) { pothole ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)

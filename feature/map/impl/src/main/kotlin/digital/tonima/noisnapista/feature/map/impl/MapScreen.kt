@@ -33,17 +33,30 @@ fun MapScreen(
 ) {
     val potholes by viewModel.potholes.collectAsStateWithLifecycle()
     val communityPotholes by viewModel.communityPotholes.collectAsStateWithLifecycle()
+    val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(-23.5505, -46.6333), 10f)
     }
     val snackbarHostState = remember { SnackbarHostState() }
+    val youAreHereLabel = stringResource(R.string.map_marker_you_are_here)
 
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is MapUiEffect.ShowMessage -> snackbarHostState.showSnackbar(context.getString(effect.messageRes))
             }
+        }
+    }
+
+    // Mesmo comportamento que o mini-mapa da Home tinha: recentra a câmera a cada novo fix de
+    // GPS recebido enquanto o rastreamento está ativo.
+    LaunchedEffect(currentLocation) {
+        currentLocation?.let {
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                LatLng(it.latitude, it.longitude),
+                16f
+            )
         }
     }
 
@@ -63,6 +76,13 @@ fun MapScreen(
                 .padding(padding),
             cameraPositionState = cameraPositionState
         ) {
+            currentLocation?.let {
+                Marker(
+                    state = rememberUpdatedMarkerState(position = LatLng(it.latitude, it.longitude)),
+                    title = youAreHereLabel,
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+                )
+            }
             potholes.forEach { pothole ->
                 Marker(
                     state = rememberUpdatedMarkerState(position = LatLng(pothole.location.latitude, pothole.location.longitude)),

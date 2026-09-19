@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import digital.tonima.noisnapista.core.data.PotholeRepository
+import digital.tonima.noisnapista.core.location.LocationProvider
 import digital.tonima.noisnapista.core.model.LocationPoint
 import digital.tonima.noisnapista.core.model.Pothole
 import digital.tonima.noisnapista.core.sensor.tracking.PotholeDetector
@@ -51,6 +52,7 @@ sealed interface TrackerUiEffect {
 class TrackerViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val potholeDetector: PotholeDetector,
+    private val locationProvider: LocationProvider,
     private val repository: PotholeRepository
 ) : ViewModel() {
 
@@ -110,6 +112,9 @@ class TrackerViewModel @Inject constructor(
                         TrackerUiIntent.PermissionType.NOTIFICATION -> it.copy(notificationPermissionGranted = intent.granted)
                     }
                 }
+                if (intent.permission == TrackerUiIntent.PermissionType.LOCATION && intent.granted) {
+                    fetchLocationPreview()
+                }
             }
         }
     }
@@ -130,6 +135,21 @@ class TrackerViewModel @Inject constructor(
         }
         // isTracking não é setado aqui: o collector de potholeDetector.isTracking acima reflete
         // assim que TrackingService.onCreate() chamar startDetection() de verdade.
+    }
+
+    // Um fix único e sob demanda (sem stream contínuo) para mostrar "você está aqui" no mapa
+    // assim que a permissão é concedida — antes disso, currentLocation só existia enquanto o
+    // TrackingService estava de fato rodando, deixando o mapa em branco até o usuário apertar
+    // "Iniciar". Ignorado se o rastreamento real já começou nesse meio-tempo, para não sobrepor
+    // um fix antigo por cima do stream contínuo do PotholeDetector.
+    private fun fetchLocationPreview() {
+        if (_uiState.value.isTracking) return
+        viewModelScope.launch {
+            val location = locationProvider.getCurrentLocation() ?: return@launch
+            if (!_uiState.value.isTracking) {
+                _uiState.update { it.copy(currentLocation = location) }
+            }
+        }
     }
 
     private fun stopTracking() {

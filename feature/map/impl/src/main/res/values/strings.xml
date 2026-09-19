@@ -6,4 +6,5 @@
     <string name="map_status_pending_fallback">PENDING</string>
     <string name="map_report_count_format">%1$d relato(s) independente(s)</string>
     <string name="map_community_refresh_failed">Não foi possível atualizar os buracos da comunidade</string>
+    <string name="map_marker_you_are_here">Você está aqui</string>
 </resources>
