@@ -158,7 +158,8 @@ fun PotholeEntity.toExternalModel() = Pothole(
     timestamp = timestamp,
     isFalseAlarm = isFalseAlarm,
     serverId = serverId,
-    status = status
+    status = status,
+    sessionId = sessionId
 )
 
 fun Pothole.toEntity() = PotholeEntity(
@@ -170,7 +171,8 @@ fun Pothole.toEntity() = PotholeEntity(
     timestamp = timestamp,
     isFalseAlarm = isFalseAlarm,
     serverId = serverId,
-    status = status
+    status = status,
+    sessionId = sessionId
 )
 
 fun PotholeEntity.toRequestDto() = PotholeReadingRequestDto(

@@ -36,6 +36,10 @@ class PotholeDetector @Inject constructor(
     // otherwise the location request would fire (and can throw SecurityException)
     // before the user has granted the location permission.
     private var scope: CoroutineScope? = null
+
+    // One id per startDetection()..stopDetection() run ("viagem"), stamped onto every Pothole
+    // detected in that run so the debug/classification screen can group them by trip.
+    private var sessionId: String? = null
     private val _potholes = MutableSharedFlow<Pothole>()
     val potholes: SharedFlow<Pothole> = _potholes.asSharedFlow()
 
@@ -76,6 +80,7 @@ class PotholeDetector @Inject constructor(
         if (scope != null) return // already running
         val detectionScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         scope = detectionScope
+        sessionId = UUID.randomUUID().toString()
         _isTracking.value = true
 
         detectionScope.launch {
@@ -106,7 +111,8 @@ class PotholeDetector @Inject constructor(
                                     id = UUID.randomUUID().toString(),
                                     location = location,
                                     severity = kotlin.math.abs(sample.z),
-                                    timestamp = System.currentTimeMillis()
+                                    timestamp = System.currentTimeMillis(),
+                                    sessionId = sessionId
                                 )
                                 _potholes.emit(pothole)
                                 launch { captureWindow(pothole.id, sample.timestampNanos) }

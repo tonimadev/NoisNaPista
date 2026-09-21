@@ -86,6 +86,21 @@ fun DebugListScreen(
         filter?.let { f -> entries.filter { it.label == f } } ?: entries
     }
     val countsByLabel = remember(entries) { entries.groupingBy { it.label }.eachCount() }
+    // Trip numbers are assigned from the full (unfiltered) entry list, keyed by each session's
+    // earliest detection, so "Viagem 3" doesn't shift around as the label filter changes.
+    val tripNumbersBySession = remember(entries) { tripNumbersBySession(entries) }
+    val sessionGroups = remember(visibleEntries, tripNumbersBySession) {
+        visibleEntries.groupBy { it.pothole.sessionId }
+            .toList()
+            .sortedByDescending { (_, sessionEntries) -> sessionEntries.maxOf { it.pothole.timestamp } }
+            .map { (sessionId, sessionEntries) ->
+                DebugSessionGroup(
+                    sessionId = sessionId,
+                    tripNumber = tripNumbersBySession[sessionId] ?: 0,
+                    entries = sessionEntries
+                )
+            }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -100,7 +115,8 @@ fun DebugListScreen(
                 text = stringResource(
                     R.string.debug_capture_summary_format,
                     entries.size,
-                    countsByLabel[DetectionLabel.UNLABELED] ?: 0
+                    countsByLabel[DetectionLabel.UNLABELED] ?: 0,
+                    tripNumbersBySession.size
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -141,12 +157,59 @@ fun DebugListScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(visibleEntries, key = { it.pothole.id }) { entry ->
-                        DebugListItem(entry = entry, onClick = { onOpenDetail(entry.pothole.id) })
+                    sessionGroups.forEach { group ->
+                        item(key = "session_${group.sessionId}") {
+                            SessionHeader(group = group)
+                        }
+                        items(group.entries, key = { it.pothole.id }) { entry ->
+                            DebugListItem(entry = entry, onClick = { onOpenDetail(entry.pothole.id) })
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+/** Assigns each session a stable "Viagem N" number from its earliest detection (oldest trip = 1),
+ * independent of any label filter or sort order applied to the entries shown on screen. */
+private fun tripNumbersBySession(entries: List<DetectionDebugEntry>): Map<String?, Int> =
+    entries.groupBy { it.pothole.sessionId }
+        .mapValues { (_, sessionEntries) -> sessionEntries.minOf { it.pothole.timestamp } }
+        .toList()
+        .sortedBy { (_, earliestTimestamp) -> earliestTimestamp }
+        .mapIndexed { index, (sessionId, _) -> sessionId to index + 1 }
+        .toMap()
+
+/** One tracking run ("viagem"): every detection sharing a PotholeDetector session id, newest
+ * trip first — lets the debug list answer "which trip was this buraco from?" at a glance. */
+private data class DebugSessionGroup(
+    val sessionId: String?,
+    val tripNumber: Int,
+    val entries: List<DetectionDebugEntry>
+)
+
+@Composable
+private fun SessionHeader(group: DebugSessionGroup) {
+    val dateFormat = remember { SimpleDateFormat("dd/MM HH:mm", Locale.forLanguageTag("pt-BR")) }
+    val startedAt = remember(group) { group.entries.minOf { it.pothole.timestamp } }
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(R.string.debug_session_header_format, group.tripNumber, dateFormat.format(Date(startedAt))),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = stringResource(R.string.debug_session_count_format, group.entries.size),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -226,6 +289,7 @@ fun DebugDetailScreen(
     val context = LocalContext.current
     val mapsApiKey = remember(context) { getMapsApiKey(context) }
     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.forLanguageTag("pt-BR")) }
+    val tripNumbersBySession = remember(entries) { tripNumbersBySession(entries) }
 
     Scaffold(
         modifier = modifier,
@@ -286,7 +350,13 @@ fun DebugDetailScreen(
                     }
                 }
 
-                item { MetadataCard(entry = entry, dateText = dateFormat.format(Date(entry.pothole.timestamp))) }
+                item {
+                    MetadataCard(
+                        entry = entry,
+                        dateText = dateFormat.format(Date(entry.pothole.timestamp)),
+                        tripNumber = tripNumbersBySession[entry.pothole.sessionId] ?: 0
+                    )
+                }
 
                 item {
                     Column {
@@ -338,9 +408,10 @@ fun DebugDetailScreen(
 }
 
 @Composable
-private fun MetadataCard(entry: DetectionDebugEntry, dateText: String) {
+private fun MetadataCard(entry: DetectionDebugEntry, dateText: String, tripNumber: Int) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(modifier = Modifier.padding(16.dp)) {
+            MetadataRow(stringResource(R.string.debug_metadata_trip), stringResource(R.string.debug_trip_number_format, tripNumber))
             MetadataRow(stringResource(R.string.debug_metadata_datetime), dateText)
             MetadataRow(
                 stringResource(R.string.debug_metadata_location),

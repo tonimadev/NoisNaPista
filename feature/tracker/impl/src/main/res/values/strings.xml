@@ -47,7 +47,11 @@
     <string name="history_community_refresh_failed">Não foi possível atualizar os buracos da comunidade</string>
 
     <string name="debug_list_title">Debug: Classificar Detecções</string>
-    <string name="debug_capture_summary_format">%1$d detecção(ões) capturada(s) • %2$d não classificada(s)</string>
+    <string name="debug_capture_summary_format">%1$d detecção(ões) capturada(s) • %2$d não classificada(s) • %3$d viagem(ns)</string>
+    <string name="debug_session_header_format">Viagem %1$d • %2$s</string>
+    <string name="debug_session_count_format">%1$d buraco(s)</string>
+    <string name="debug_metadata_trip">Viagem</string>
+    <string name="debug_trip_number_format">Viagem %1$d</string>
     <string name="debug_filter_all_format">Todos (%1$d)</string>
     <string name="debug_filter_label_format">%1$s (%2$d)</string>
     <string name="debug_empty_category">Nenhuma detecção nesta categoria.</string>

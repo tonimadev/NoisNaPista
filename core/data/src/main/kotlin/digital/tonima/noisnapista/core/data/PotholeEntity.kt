@@ -14,5 +14,6 @@ data class PotholeEntity(
     val isSynced: Boolean = false,
     val isFalseAlarm: Boolean = false,
     val serverId: String? = null,
-    val status: String? = null
+    val status: String? = null,
+    val sessionId: String? = null
 )
