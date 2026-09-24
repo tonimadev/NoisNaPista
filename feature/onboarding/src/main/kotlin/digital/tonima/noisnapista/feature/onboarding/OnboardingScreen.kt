@@ -16,7 +16,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Groups
-import androidx.compose.material.icons.rounded.Sensors
+import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material.icons.rounded.VerifiedUser
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -41,8 +41,9 @@ import kotlinx.coroutines.launch
 
 /**
  * Shown once on first launch (gated in MainActivity by [OnboardingViewModel]'s persisted flag):
- * explains the app's collaborative purpose and, concretely, how it detects potholes (accelerometer
- * + GPS, automatic, anonymous) before the user ever grants a permission or presses "iniciar".
+ * explains the app's collaborative purpose, that detection must be switched on before driving (the
+ * one thing the app can't do for the user), and why it will ask for location — so the permission
+ * prompt on Home arrives already expected instead of reading as "this app wants to track me".
  */
 @Composable
 fun OnboardingScreen(onFinish: () -> Unit, modifier: Modifier = Modifier) {
@@ -159,7 +160,7 @@ private fun onboardingPages() = listOf(
         descriptionRes = R.string.onboarding_page1_description
     ),
     OnboardingPage(
-        icon = Icons.Rounded.Sensors,
+        icon = Icons.Rounded.TouchApp,
         titleRes = R.string.onboarding_page2_title,
         descriptionRes = R.string.onboarding_page2_description
     ),

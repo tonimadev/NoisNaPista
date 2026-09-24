@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import digital.tonima.noisnapista.core.data.OnboardingPreferences
 import digital.tonima.noisnapista.core.data.PotholeRepository
 import digital.tonima.noisnapista.core.location.LocationProvider
 import digital.tonima.noisnapista.core.model.LocationPoint
@@ -38,7 +39,10 @@ data class TrackerUiState(
      * triggers on, independent of how the phone is mounted (see PotholeDetector.
      * computeVerticalAcceleration). Not simply abs(sensorZ): a phone mounted at an angle can have
      * a real bump show up mostly on X or Y instead. */
-    val sensorIntensity: Float = 0f
+    val sensorIntensity: Float = 0f,
+    /** Whether the user has ever turned detection on. Until they do, Home keeps a short "how it
+     * works" hint on screen — the one step the app can't take for them is pressing that button. */
+    val hasStartedDetectionBefore: Boolean = true
 )
 
 sealed interface TrackerUiIntent {
@@ -61,7 +65,8 @@ class TrackerViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val potholeDetector: PotholeDetector,
     private val locationProvider: LocationProvider,
-    private val repository: PotholeRepository
+    private val repository: PotholeRepository,
+    private val preferences: OnboardingPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TrackerUiState())
@@ -110,6 +115,12 @@ class TrackerViewModel @Inject constructor(
         viewModelScope.launch {
             potholeDetector.isTracking.collect { tracking ->
                 _uiState.update { it.copy(isTracking = tracking) }
+                if (tracking) preferences.markDetectionStarted()
+            }
+        }
+        viewModelScope.launch {
+            preferences.hasStartedDetection.collect { started ->
+                _uiState.update { it.copy(hasStartedDetectionBefore = started) }
             }
         }
     }
