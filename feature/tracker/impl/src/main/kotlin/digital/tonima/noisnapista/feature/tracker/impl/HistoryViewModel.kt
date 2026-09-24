@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import digital.tonima.noisnapista.core.data.PotholeRepository
+import digital.tonima.noisnapista.core.location.LocationProvider
 import digital.tonima.noisnapista.core.model.Pothole
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +30,8 @@ sealed interface HistoryUiEffect {
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
-    private val repository: PotholeRepository
+    private val repository: PotholeRepository,
+    private val locationProvider: LocationProvider
 ) : ViewModel() {
 
     val potholes: StateFlow<List<Pothole>> = repository.getPotholes()
@@ -79,7 +81,16 @@ class HistoryViewModel @Inject constructor(
 
     private fun refreshCommunity(notifyOnFailure: Boolean) {
         viewModelScope.launch {
-            repository.fetchCommunityPotholes()
+            // Only the potholes around the user (server-side radius + limit, nearest first) —
+            // never the whole country.
+            val location = locationProvider.getCurrentLocation()
+            if (location == null) {
+                if (notifyOnFailure) {
+                    _uiEffect.send(HistoryUiEffect.ShowMessage(R.string.history_community_location_unavailable))
+                }
+                return@launch
+            }
+            repository.fetchNearbyCommunityPotholes(location)
                 .onSuccess { _communityPotholes.value = it }
                 .onFailure {
                     if (notifyOnFailure) {

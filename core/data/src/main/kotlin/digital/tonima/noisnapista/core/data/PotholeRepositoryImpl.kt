@@ -6,10 +6,12 @@ import androidx.work.*
 import dagger.hilt.android.qualifiers.ApplicationContext
 import digital.tonima.noisnapista.core.model.DetectionDebugEntry
 import digital.tonima.noisnapista.core.model.DetectionLabel
+import digital.tonima.noisnapista.core.model.GeoBounds
 import digital.tonima.noisnapista.core.model.LocationPoint
 import digital.tonima.noisnapista.core.model.Pothole
 import digital.tonima.noisnapista.core.model.SensorWindow
 import digital.tonima.noisnapista.core.model.SensorWindowSample
+import digital.tonima.noisnapista.core.network.PotholeReadingBatchRequestDto
 import digital.tonima.noisnapista.core.network.PotholeReadingRequestDto
 import digital.tonima.noisnapista.core.network.PotholeResponseDto
 import digital.tonima.noisnapista.core.network.PotholeService
@@ -70,21 +72,36 @@ class PotholeRepositoryImpl @Inject constructor(
         val unsynced = potholeDao.getUnsyncedPotholes()
         if (unsynced.isEmpty()) return
         val reporterToken = reporterIdentityProvider.getOrCreateToken()
-        var failureCount = 0
-        unsynced.forEach { entity ->
+        var failedChunks = 0
+        // One request per chunk instead of one per pothole — a long drive's worth of detections
+        // flushes in a handful of round trips. Idempotent by clientId, so resending is harmless.
+        unsynced.chunked(PotholeReadingBatchRequestDto.MAX_SIZE).forEach { chunk ->
             try {
-                val response = potholeService.submitReading(reporterToken, entity.toRequestDto())
-                potholeDao.markAsSynced(entity.id, response.id, response.status)
+                val results = potholeService.submitReadings(
+                    reporterToken,
+                    PotholeReadingBatchRequestDto(chunk.map { it.toRequestDto() })
+                )
+                results.forEach { result ->
+                    val pothole = result.pothole
+                    if (pothole != null) {
+                        potholeDao.markAsSynced(result.clientId, pothole.id, pothole.status)
+                    } else {
+                        // Rejected on its own merits (e.g. bad timestamp): retrying right away
+                        // won't change the answer, so it doesn't trigger a WorkManager retry — it
+                        // stays unsynced and is resent with the next sync.
+                        Log.w(TAG, "Backend rejected pothole ${result.clientId}: ${result.error}")
+                    }
+                }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to sync pothole ${entity.id}", e)
-                failureCount++
+                Log.e(TAG, "Failed to sync ${chunk.size} pothole(s)", e)
+                failedChunks++
             }
         }
         // SyncWorker relies on this to decide Result.success() vs Result.retry() — without it,
         // a totally offline sync attempt would silently report "success" and WorkManager would
         // never retry.
-        if (failureCount > 0) {
-            throw IOException("$failureCount of ${unsynced.size} pothole(s) failed to sync")
+        if (failedChunks > 0) {
+            throw IOException("$failedChunks sync request(s) failed for ${unsynced.size} pothole(s)")
         }
     }
 
@@ -98,8 +115,20 @@ class PotholeRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun fetchCommunityPotholes(): Result<List<Pothole>> =
-        runCatching { potholeService.getPotholes().map { it.toExternalModel() } }
+    override suspend fun fetchCommunityPotholes(bounds: GeoBounds): Result<List<Pothole>> =
+        runCatching {
+            potholeService.getPotholes(
+                minLat = bounds.minLatitude,
+                minLon = bounds.minLongitude,
+                maxLat = bounds.maxLatitude,
+                maxLon = bounds.maxLongitude
+            ).map { it.toExternalModel() }
+        }
+
+    override suspend fun fetchNearbyCommunityPotholes(location: LocationPoint): Result<List<Pothole>> =
+        runCatching {
+            potholeService.getNearbyPotholes(location.latitude, location.longitude).map { it.toExternalModel() }
+        }
 
     override suspend fun castFixVote(serverId: String): Result<Pothole> = runCatching {
         val reporterToken = reporterIdentityProvider.getOrCreateToken()

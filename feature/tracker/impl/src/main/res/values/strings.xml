@@ -33,7 +33,7 @@
     <string name="tracker_location_permission_required">Permissão de localização necessária</string>
 
     <string name="history_title">Histórico de Detecções</string>
-    <string name="history_community_header">Comunidade</string>
+    <string name="history_community_header">Comunidade por perto</string>
     <string name="history_community_empty">Nenhum buraco da comunidade por perto.</string>
     <string name="history_false_alarm_label">Alarme Falso</string>
     <string name="history_pothole_detected_label">Buraco Detectado</string>
@@ -50,6 +50,7 @@
     <string name="history_vote_registered">Voto registrado</string>
     <string name="history_vote_failed">Não foi possível votar agora. Tente novamente.</string>
     <string name="history_community_refresh_failed">Não foi possível atualizar os buracos da comunidade</string>
+    <string name="history_community_location_unavailable">Não foi possível obter sua localização para buscar buracos por perto</string>
 
     <string name="debug_list_title">Debug: Classificar Detecções</string>
     <string name="debug_capture_summary_format">%1$d detecção(ões) capturada(s) • %2$d não classificada(s) • %3$d viagem(ns)</string>

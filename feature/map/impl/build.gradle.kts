@@ -38,6 +38,7 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     
     implementation(libs.maps.compose)
+    implementation(libs.maps.compose.utils)
     implementation(libs.play.services.maps)
 
     implementation(libs.hilt.android)

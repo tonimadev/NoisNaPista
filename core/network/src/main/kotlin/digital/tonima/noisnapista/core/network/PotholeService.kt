@@ -20,12 +20,32 @@ interface PotholeService {
         @Body request: PotholeReadingRequestDto
     ): PotholeResponseDto
 
+    /** Up to [PotholeReadingBatchRequestDto.MAX_SIZE] readings in one round trip; one result per
+     * reading, in order. */
+    @POST("api/v1/potholes/batch")
+    suspend fun submitReadings(
+        @Header(REPORTER_TOKEN_HEADER) reporterToken: String,
+        @Body request: PotholeReadingBatchRequestDto
+    ): List<PotholeBatchItemResponseDto>
+
+    /** Map viewport query. The server caps the result (most-corroborated first) — [limit] can
+     * only lower that cap. */
     @GET("api/v1/potholes")
     suspend fun getPotholes(
-        @Query("minLat") minLat: Double? = null,
-        @Query("minLon") minLon: Double? = null,
-        @Query("maxLat") maxLat: Double? = null,
-        @Query("maxLon") maxLon: Double? = null
+        @Query("minLat") minLat: Double,
+        @Query("minLon") minLon: Double,
+        @Query("maxLat") maxLat: Double,
+        @Query("maxLon") maxLon: Double,
+        @Query("limit") limit: Int? = null
+    ): List<PotholeResponseDto>
+
+    /** Potholes around a point, nearest first — for list screens rather than the map. */
+    @GET("api/v1/potholes/nearby")
+    suspend fun getNearbyPotholes(
+        @Query("lat") latitude: Double,
+        @Query("lon") longitude: Double,
+        @Query("radiusMeters") radiusMeters: Double? = null,
+        @Query("limit") limit: Int? = null
     ): List<PotholeResponseDto>
 
     @POST("api/v1/potholes/{id}/fix-votes")

@@ -6,10 +6,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import digital.tonima.noisnapista.core.data.PotholeRepository
 import digital.tonima.noisnapista.core.location.LocationProvider
+import digital.tonima.noisnapista.core.model.GeoBounds
 import digital.tonima.noisnapista.core.model.LocationPoint
 import digital.tonima.noisnapista.core.model.Pothole
 import digital.tonima.noisnapista.core.sensor.tracking.PotholeDetector
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -59,20 +62,35 @@ class MapViewModel @Inject constructor(
     private val _uiEffect = Channel<MapUiEffect>()
     val uiEffect = _uiEffect.receiveAsFlow()
 
+    // Only the visible area is fetched, so there's nothing to load until the map reports its
+    // first viewport (see onViewportChanged).
+    private var lastViewport: GeoBounds? = null
+    private var fetchJob: Job? = null
+
     init {
-        // Silent on the automatic first load — an unreachable backend shouldn't greet the user
-        // with an error the moment they open the map; the device's own pins still render fine.
-        refreshCommunityPotholes(notifyOnFailure = false)
         viewModelScope.launch {
             _previewLocation.value = locationProvider.getCurrentLocation()
         }
     }
 
+    /** Called by the screen whenever the camera settles. Silent on failure — an unreachable
+     * backend shouldn't pop an error on every pan; the device's own pins still render fine. */
+    fun onViewportChanged(bounds: GeoBounds) {
+        lastViewport = bounds
+        refreshCommunityPotholes(notifyOnFailure = false)
+    }
+
     fun refreshCommunityPotholes(notifyOnFailure: Boolean = true) {
-        viewModelScope.launch {
-            repository.fetchCommunityPotholes()
+        val bounds = lastViewport ?: return
+        // A newer viewport supersedes an in-flight fetch for an old one, so a slow response for
+        // where the user *was* can never overwrite the pins for where they are now.
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
+            repository.fetchCommunityPotholes(bounds)
                 .onSuccess { _communityPotholes.value = it }
                 .onFailure { error ->
+                    // Superseded by a newer viewport (see fetchJob) — not a real failure.
+                    if (error is CancellationException) return@launch
                     Log.e(TAG, "Failed to fetch community potholes", error)
                     if (notifyOnFailure) {
                         _uiEffect.send(MapUiEffect.ShowMessage(R.string.map_community_refresh_failed))
