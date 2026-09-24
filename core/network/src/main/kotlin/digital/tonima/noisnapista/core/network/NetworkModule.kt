@@ -16,11 +16,10 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    // "localhost" here means the device itself — it only reaches the dev machine's
-    // NoisNaPistaBackend (`./gradlew bootRun`) once you run `adb reverse tcp:8080 tcp:8080` (works
-    // for both the emulator and a USB-connected physical device). Point this at a real deployed
-    // URL before shipping.
-    private const val BASE_URL = "http://localhost:8080/"
+    // Deployed NoisNaPistaBackend. To test against a local `./gradlew bootRun` instead, switch to
+    // "http://localhost:8080/" and run `adb reverse tcp:8080 tcp:8080` (cleartext to localhost is
+    // already allowed by network_security_config.xml).
+    private const val BASE_URL = "https://api.fidd.com.br/"
 
     @Provides
     @Singleton

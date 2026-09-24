@@ -78,14 +78,14 @@ ml/                      Offline Python pipeline (pandas/scikit-learn) for train
    ```
    `secrets.properties` is gitignored; `local.defaults.properties` only holds a placeholder so
    the project still compiles without a key (maps just won't render tiles).
-3. (Optional, for backend-dependent features — community map pins, city ranking, sync) run the
-   companion `NoisNaPistaBackend` Spring Boot project locally, then expose it to the device:
+3. The app talks to the deployed backend at `https://api.fidd.com.br/` (see
+   `core/network/.../NetworkModule.kt`). To develop against a local copy of the companion
+   `NoisNaPistaBackend` Spring Boot project instead, point `BASE_URL` at
+   `http://localhost:8080/` and expose it to the device:
    ```bash
    ./gradlew bootRun            # in the backend project
    adb reverse tcp:8080 tcp:8080  # works for the emulator and a USB-connected physical device
    ```
-   The app talks to it at `http://localhost:8080/` (see `core/network/.../NetworkModule.kt`) —
-   point that at a deployed URL before shipping a release build.
 4. Open the project in Android Studio and run the `app` configuration, or from the command
    line:
    ```bash
