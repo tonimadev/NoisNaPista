@@ -2,31 +2,53 @@ package digital.tonima.noisnapista.feature.ranking.impl
 
 import android.Manifest
 import android.widget.Toast
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.TrendingDown
+import androidx.compose.material.icons.automirrored.rounded.TrendingUp
+import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.Leaderboard
 import androidx.compose.material.icons.rounded.MyLocation
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,9 +58,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -77,80 +105,144 @@ fun RankingScreen(
         }
     }
 
+    val hasContent = uiState.top.isNotEmpty()
+    val metricLabel = uiState.sortBy.metricLabel()
+    val topTitle = stringResource(R.string.ranking_top_header_format, metricLabel)
+    val bottomTitle = stringResource(R.string.ranking_bottom_header_format, metricLabel)
+    val showMyCityCard = !uiState.loadFailed
+
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.ranking_title), fontWeight = FontWeight.Bold) })
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(stringResource(R.string.ranking_title), fontWeight = FontWeight.Bold)
+                        if (uiState.totalCities > 0) {
+                            Text(
+                                pluralStringResource(R.plurals.ranking_subtitle_format, uiState.totalCities, uiState.totalCities),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            )
         }
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)) {
+        // Capped width so rows and bars stay readable on tablets/landscape instead of stretching.
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .wrapContentWidth()
+                .widthIn(max = 640.dp)
+        ) {
             SortSelector(
                 selected = uiState.sortBy,
                 onSelected = viewModel::onSortByChanged
             )
 
-            MyCityCard(
-                myCity = uiState.myCity,
-                totalCities = uiState.totalCities,
-                isLocating = uiState.isLocatingMyCity,
-                canScrollToRow = uiState.myCity?.let { city ->
-                    uiState.top.any { it.ibgeCode == city.ibgeCode } || uiState.bottom.any { it.ibgeCode == city.ibgeCode }
-                } ?: false,
-                onFindMyCity = {
-                    if (locationPermissionState.status.isGranted) {
-                        viewModel.findMyCity()
-                    } else {
-                        pendingMyCityRequest = true
-                        locationPermissionState.launchPermissionRequest()
-                    }
-                },
-                onScrollToRow = {
-                    val city = uiState.myCity ?: return@MyCityCard
-                    val topIndex = uiState.top.indexOfFirst { it.ibgeCode == city.ibgeCode }
-                    val bottomIndex = uiState.bottom.indexOfFirst { it.ibgeCode == city.ibgeCode }
-                    val targetIndex = when {
-                        topIndex >= 0 -> 1 + topIndex
-                        bottomIndex >= 0 -> 1 + uiState.top.size + 1 + bottomIndex
-                        else -> null
-                    }
-                    if (targetIndex != null) {
-                        scope.launch { listState.animateScrollToItem(targetIndex) }
-                    }
-                }
-            )
-
-            val metricLabel = uiState.sortBy.metricLabel()
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            PullToRefreshBox(
+                // The initial load shows its own centered spinner; the pull indicator is only for
+                // refreshing a ranking that's already on screen.
+                isRefreshing = uiState.isLoading && hasContent,
+                onRefresh = { viewModel.refresh() },
+                modifier = Modifier.fillMaxSize()
             ) {
-                item(key = "top-header") {
-                    SectionLabel(stringResource(R.string.ranking_top_header_format, metricLabel))
-                }
-                items(uiState.top, key = { "top-${it.ibgeCode}" }) { city ->
-                    CityRankingRow(city = city, metric = uiState.sortBy, isMyCity = city.ibgeCode == uiState.myCity?.ibgeCode)
-                }
-
-                if (uiState.bottom.isNotEmpty()) {
-                    item(key = "bottom-header") {
-                        SectionLabel(stringResource(R.string.ranking_bottom_header_format, metricLabel))
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp)
+                ) {
+                    if (showMyCityCard) {
+                        item(key = "my-city") {
+                            MyCityCard(
+                                myCity = uiState.myCity,
+                                totalCities = uiState.totalCities,
+                                metric = uiState.sortBy,
+                                isLocating = uiState.isLocatingMyCity,
+                                canScrollToRow = uiState.myCity?.let { city ->
+                                    uiState.top.any { it.ibgeCode == city.ibgeCode } || uiState.bottom.any { it.ibgeCode == city.ibgeCode }
+                                } ?: false,
+                                onFindMyCity = {
+                                    if (locationPermissionState.status.isGranted) {
+                                        viewModel.findMyCity()
+                                    } else {
+                                        pendingMyCityRequest = true
+                                        locationPermissionState.launchPermissionRequest()
+                                    }
+                                },
+                                onScrollToRow = {
+                                    val city = uiState.myCity ?: return@MyCityCard
+                                    // Mirrors the item order below: [my-city], top header, top rows,
+                                    // bottom header, bottom rows.
+                                    val topIndex = uiState.top.indexOfFirst { it.ibgeCode == city.ibgeCode }
+                                    val bottomIndex = uiState.bottom.indexOfFirst { it.ibgeCode == city.ibgeCode }
+                                    val targetIndex = when {
+                                        topIndex >= 0 -> 2 + topIndex
+                                        bottomIndex >= 0 -> 2 + uiState.top.size + 1 + bottomIndex
+                                        else -> null
+                                    }
+                                    if (targetIndex != null) {
+                                        scope.launch { listState.animateScrollToItem(targetIndex) }
+                                    }
+                                }
+                            )
+                        }
                     }
-                    items(uiState.bottom, key = { "bottom-${it.ibgeCode}" }) { city ->
-                        CityRankingRow(city = city, metric = uiState.sortBy, isMyCity = city.ibgeCode == uiState.myCity?.ibgeCode)
-                    }
-                }
 
-                if (uiState.top.isEmpty() && !uiState.isLoading) {
-                    item(key = "empty") {
-                        Text(
-                            stringResource(R.string.ranking_empty),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    when {
+                        hasContent -> {
+                            rankingSection(
+                                key = "top",
+                                title = topTitle,
+                                icon = Icons.AutoMirrored.Rounded.TrendingUp,
+                                cities = uiState.top,
+                                metric = uiState.sortBy,
+                                myCityCode = uiState.myCity?.ibgeCode
+                            )
+                            if (uiState.bottom.isNotEmpty()) {
+                                rankingSection(
+                                    key = "bottom",
+                                    title = bottomTitle,
+                                    icon = Icons.AutoMirrored.Rounded.TrendingDown,
+                                    cities = uiState.bottom,
+                                    metric = uiState.sortBy,
+                                    myCityCode = uiState.myCity?.ibgeCode
+                                )
+                            }
+                        }
+
+                        uiState.isLoading -> item(key = "loading") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 48.dp),
+                                contentAlignment = Alignment.Center
+                            ) { CircularProgressIndicator() }
+                        }
+
+                        uiState.loadFailed -> item(key = "error") {
+                            MessageState(
+                                icon = Icons.Rounded.CloudOff,
+                                title = stringResource(R.string.ranking_error_title),
+                                body = stringResource(R.string.ranking_error_body),
+                                action = {
+                                    Button(onClick = { viewModel.refresh() }) {
+                                        Text(stringResource(R.string.ranking_retry_button))
+                                    }
+                                }
+                            )
+                        }
+
+                        else -> item(key = "empty") {
+                            MessageState(
+                                icon = Icons.Rounded.Leaderboard,
+                                title = stringResource(R.string.ranking_empty_title),
+                                body = stringResource(R.string.ranking_empty)
+                            )
+                        }
                     }
                 }
             }
@@ -158,20 +250,30 @@ fun RankingScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SortSelector(selected: CityRankingSortBy, onSelected: (CityRankingSortBy) -> Unit) {
-    Row(
+    val options = CityRankingSortBy.entries
+    SingleChoiceSegmentedButtonRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        CityRankingSortBy.entries.forEach { sortBy ->
-            FilterChip(
+        options.forEachIndexed { index, sortBy ->
+            SegmentedButton(
                 selected = sortBy == selected,
                 onClick = { onSelected(sortBy) },
-                label = { Text(sortBy.chipLabel()) }
-            )
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                // No checkmark: "Reincidências" needs the full segment width on narrow phones.
+                icon = {},
+                // The theme doesn't define secondaryContainer, so the default would be M3 lavender.
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            ) {
+                Text(sortBy.chipLabel(), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }
@@ -180,68 +282,132 @@ private fun SortSelector(selected: CityRankingSortBy, onSelected: (CityRankingSo
 private fun MyCityCard(
     myCity: CityRanking?,
     totalCities: Int,
+    metric: CityRankingSortBy,
     isLocating: Boolean,
     canScrollToRow: Boolean,
     onFindMyCity: () -> Unit,
     onScrollToRow: () -> Unit
 ) {
-    Card(
+    val onContainer = MaterialTheme.colorScheme.onPrimaryContainer
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            .padding(bottom = 8.dp)
+            .animateContentSize(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = onContainer
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Rounded.MyLocation,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Icon(Icons.Rounded.MyLocation, contentDescription = null, modifier = Modifier.size(16.dp))
                 Text(
-                    stringResource(R.string.ranking_my_city_title),
-                    modifier = Modifier.padding(start = 8.dp),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    stringResource(R.string.ranking_my_city_title).uppercase(),
+                    modifier = Modifier
+                        .padding(start = 6.dp)
+                        .weight(1f),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
                 )
+                if (myCity != null && !isLocating) {
+                    IconButton(onClick = onFindMyCity, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            Icons.Rounded.Refresh,
+                            contentDescription = stringResource(R.string.ranking_refresh_button),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
 
             when {
                 isLocating -> Row(
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp), strokeWidth = 2.dp)
-                    Text(stringResource(R.string.ranking_locating), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = onContainer)
+                    Text(stringResource(R.string.ranking_locating), modifier = Modifier.padding(start = 12.dp))
                 }
 
-                myCity == null -> TextButton(onClick = onFindMyCity) {
-                    Text(stringResource(R.string.ranking_view_my_city_button))
+                myCity == null -> {
+                    Text(
+                        stringResource(R.string.ranking_my_city_prompt),
+                        modifier = Modifier.padding(top = 8.dp),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Button(onClick = onFindMyCity, modifier = Modifier.padding(top = 12.dp)) {
+                        Icon(Icons.Rounded.MyLocation, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.ranking_view_my_city_button))
+                    }
                 }
 
                 else -> {
-                    Text(
-                        stringResource(R.string.ranking_city_name_state_format, myCity.name, myCity.state),
+                    Row(
                         modifier = Modifier.padding(top = 8.dp),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = myCity.rank?.let { stringResource(R.string.ranking_my_city_rank_format, it, totalCities) }
-                            ?: stringResource(R.string.ranking_no_potholes_metric),
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = myCity.summaryLine(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Row(modifier = Modifier.padding(top = 4.dp)) {
-                        if (canScrollToRow) {
-                            TextButton(onClick = onScrollToRow) { Text(stringResource(R.string.ranking_view_in_list_button)) }
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                myCity.name,
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(myCity.state, style = MaterialTheme.typography.bodyMedium, color = onContainer.copy(alpha = 0.75f))
                         }
-                        TextButton(onClick = onFindMyCity) { Text(stringResource(R.string.ranking_refresh_button)) }
+                        Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 12.dp)) {
+                            Text(
+                                myCity.rank?.let { stringResource(R.string.ranking_ordinal_format, it) }
+                                    ?: stringResource(R.string.ranking_rank_placeholder),
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Black
+                            )
+                            Text(
+                                if (myCity.rank != null) {
+                                    pluralStringResource(R.plurals.ranking_of_total_format, totalCities, totalCities)
+                                } else {
+                                    stringResource(R.string.ranking_unranked)
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                color = onContainer.copy(alpha = 0.75f)
+                            )
+                        }
+                    }
+
+                    if (myCity.rank == null) {
+                        Text(
+                            stringResource(R.string.ranking_no_potholes_metric),
+                            modifier = Modifier.padding(top = 8.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = onContainer.copy(alpha = 0.75f)
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(onContainer.copy(alpha = 0.08f))
+                            .padding(vertical = 12.dp)
+                    ) {
+                        CityRankingSortBy.entries.forEach { stat ->
+                            StatItem(
+                                value = myCity.valueFor(stat),
+                                label = stat.chipLabel(),
+                                emphasized = stat == metric,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    if (canScrollToRow) {
+                        TextButton(
+                            onClick = onScrollToRow,
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) { Text(stringResource(R.string.ranking_view_in_list_button), color = onContainer) }
                     }
                 }
             }
@@ -250,54 +416,217 @@ private fun MyCityCard(
 }
 
 @Composable
-private fun SectionLabel(text: String) {
-    Text(
-        text,
-        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold
+private fun StatItem(value: Long, label: String, emphasized: Boolean, modifier: Modifier = Modifier) {
+    val color = MaterialTheme.colorScheme.onPrimaryContainer
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            value.toString(),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = if (emphasized) FontWeight.Black else FontWeight.SemiBold,
+            color = if (emphasized) color else color.copy(alpha = 0.7f)
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (emphasized) color else color.copy(alpha = 0.7f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+/** A section header followed by its rows, drawn as one grouped list: rows sit 2dp apart and
+ * only the group's outer corners are fully rounded. */
+private fun LazyListScope.rankingSection(
+    key: String,
+    title: String,
+    icon: ImageVector,
+    cities: List<CityRanking>,
+    metric: CityRankingSortBy,
+    myCityCode: Int?
+) {
+    // Bars are relative to the section's largest value, so each section reads on its own scale.
+    val maxValue = cities.maxOfOrNull { it.valueFor(metric) } ?: 0L
+    item(key = "$key-header") {
+        SectionHeader(title = title, icon = icon)
+    }
+    itemsIndexed(cities, key = { _, city -> "$key-${city.ibgeCode}" }) { index, city ->
+        CityRankingRow(
+            city = city,
+            metric = metric,
+            fraction = if (maxValue > 0) city.valueFor(metric).toFloat() / maxValue else 0f,
+            isMyCity = city.ibgeCode == myCityCode,
+            shape = groupedShape(index, cities.size),
+            modifier = Modifier.padding(bottom = 2.dp)
+        )
+    }
+}
+
+private fun groupedShape(index: Int, count: Int): RoundedCornerShape {
+    val outer = 20.dp
+    val inner = 6.dp
+    return RoundedCornerShape(
+        topStart = if (index == 0) outer else inner,
+        topEnd = if (index == 0) outer else inner,
+        bottomStart = if (index == count - 1) outer else inner,
+        bottomEnd = if (index == count - 1) outer else inner
     )
 }
 
 @Composable
-private fun CityRankingRow(city: CityRanking, metric: CityRankingSortBy, isMyCity: Boolean) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isMyCity) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surface
+private fun SectionHeader(title: String, icon: ImageVector) {
+    Row(
+        modifier = Modifier.padding(start = 4.dp, top = 20.dp, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        Text(
+            title,
+            modifier = Modifier.padding(start = 8.dp),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
         )
+    }
+}
+
+@Composable
+private fun CityRankingRow(
+    city: CityRanking,
+    metric: CityRankingSortBy,
+    fraction: Float,
+    isMyCity: Boolean,
+    shape: RoundedCornerShape,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.colorScheme
+    val animatedFraction by animateFloatAsState(fraction, label = "rankBar")
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = shape,
+        color = colors.surfaceVariant,
+        border = if (isMyCity) BorderStroke(1.5.dp, colors.primary) else null
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = city.rank?.let { stringResource(R.string.ranking_rank_format, it) } ?: stringResource(R.string.ranking_rank_placeholder),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(end = 12.dp)
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.ranking_city_name_state_format, city.name, city.state), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                Text(city.summaryLine(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            RankBadge(rank = city.rank, highlighted = isMyCity)
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp)
+            ) {
+                Text(
+                    city.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    if (isMyCity) "${city.state} · ${stringResource(R.string.ranking_your_city_tag)}" else city.state,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isMyCity) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+                Box(
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(CircleShape)
+                        .background(colors.onSurfaceVariant.copy(alpha = 0.12f))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(animatedFraction)
+                            .height(4.dp)
+                            .clip(CircleShape)
+                            .background(colors.primary)
+                    )
+                }
             }
-            Text(
-                text = city.highlightedValue(metric).toString(),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    city.valueFor(metric).toString(),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    metric.metricLabel(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun CityRanking.summaryLine(): String =
-    stringResource(R.string.ranking_summary_format, totalPotholes, fixedPotholes, recurrenceCount)
+private fun RankBadge(rank: Int?, highlighted: Boolean) {
+    val colors = MaterialTheme.colorScheme
+    Box(
+        modifier = Modifier
+            .defaultMinSize(minWidth = 40.dp, minHeight = 40.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (highlighted) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.1f))
+            .padding(horizontal = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            rank?.let { stringResource(R.string.ranking_ordinal_format, it) } ?: stringResource(R.string.ranking_rank_placeholder),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = if (highlighted) colors.onPrimary else colors.onSurface
+        )
+    }
+}
 
-private fun CityRanking.highlightedValue(metric: CityRankingSortBy): Long = when (metric) {
+@Composable
+private fun MessageState(
+    icon: ImageVector,
+    title: String,
+    body: String,
+    action: (@Composable () -> Unit)? = null
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp))
+        }
+        Text(
+            title,
+            modifier = Modifier.padding(top = 16.dp),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            body,
+            modifier = Modifier.padding(top = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        if (action != null) {
+            Spacer(Modifier.height(16.dp))
+            action()
+        }
+    }
+}
+
+private fun CityRanking.valueFor(metric: CityRankingSortBy): Long = when (metric) {
     CityRankingSortBy.POTHOLES -> totalPotholes
     CityRankingSortBy.FIXED -> fixedPotholes
     CityRankingSortBy.RECURRENCE -> recurrenceCount

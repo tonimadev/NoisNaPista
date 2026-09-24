@@ -24,6 +24,8 @@ data class RankingUiState(
     val top: List<CityRanking> = emptyList(),
     val bottom: List<CityRanking> = emptyList(),
     val isLoading: Boolean = false,
+    /** The last ranking fetch failed and there's nothing cached to show — drives the retry state. */
+    val loadFailed: Boolean = false,
     /** The user's own city, once located — null before the user asks, or if it couldn't be
      * resolved. Its `rank` is specific to [sortBy], re-fetched whenever that changes. */
     val myCity: CityRanking? = null,
@@ -73,10 +75,13 @@ class RankingViewModel @Inject constructor(
             val sortBy = _uiState.value.sortBy
             cityRepository.fetchRanking(sortBy)
                 .onSuccess { list ->
-                    _uiState.update { it.copy(totalCities = list.totalCities, top = list.top, bottom = list.bottom) }
+                    _uiState.update {
+                        it.copy(totalCities = list.totalCities, top = list.top, bottom = list.bottom, loadFailed = false)
+                    }
                 }
                 .onFailure { error ->
                     Log.e(TAG, "Failed to fetch city ranking", error)
+                    _uiState.update { it.copy(loadFailed = it.top.isEmpty()) }
                     if (notifyOnFailure) {
                         _uiEffect.send(RankingUiEffect.ShowMessage(R.string.ranking_load_failed))
                     }
