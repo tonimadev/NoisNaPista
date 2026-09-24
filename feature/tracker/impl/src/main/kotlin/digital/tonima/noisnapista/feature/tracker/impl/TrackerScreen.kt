@@ -4,19 +4,19 @@ import android.Manifest
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,6 +42,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -182,7 +186,13 @@ fun TrackerScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            SensorIntensityBar(intensity = uiState.sensorIntensity, isTracking = uiState.isTracking)
+            SensorReadingPanel(
+                x = uiState.sensorX,
+                y = uiState.sensorY,
+                z = uiState.sensorZ,
+                verticalIntensity = uiState.sensorIntensity,
+                isTracking = uiState.isTracking
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -272,23 +282,33 @@ private fun StatusRow(isTracking: Boolean) {
     }
 }
 
-// Same 15 m/s² line PotholeDetector uses to decide "this is a pothole" — the bar turns red at
-// exactly the value that would trigger a detection, so it's a direct visual explanation of why.
+// Same 15 m/s² line PotholeDetector uses to decide "this is a pothole" — the header status text
+// turns red at exactly the value that would trigger a detection. That value is the
+// gravity-corrected vertical acceleration (see PotholeDetector.computeVerticalAcceleration), not
+// simply abs(z) — a bump can land mostly on the raw X or Y axis if the phone isn't mounted flat,
+// so the X/Y/Z chips and gizmo below are shown as fixed-color raw context only.
 private const val IMPACT_THRESHOLD = 15f
 private const val WARNING_THRESHOLD = 10f
 private const val MAX_SENSOR_SCALE = 30f
 
+private val AXIS_X_COLOR = Color(0xFF4FC3F7)
+private val AXIS_Y_COLOR = Color(0xFF81C784)
+private val AXIS_Z_COLOR = Color(0xFFBA68C8)
+
+// Fixed isometric projection directions for a simple 3-axis "gizmo": Z straight up, X/Y splayed
+// 30° down to either side — the classic isometric-cube look, cheap to draw with plain lines
+// instead of pulling in a 3D rendering library for three numbers.
+private val AXIS_X_DIR = Offset(0.866f, 0.5f)
+private val AXIS_Y_DIR = Offset(-0.866f, 0.5f)
+private val AXIS_Z_DIR = Offset(0f, -1f)
+
 @Composable
-private fun SensorIntensityBar(intensity: Float, isTracking: Boolean) {
-    val fraction by animateFloatAsState(
-        targetValue = if (isTracking) (intensity / MAX_SENSOR_SCALE).coerceIn(0f, 1f) else 0f,
-        label = "sensorIntensityFraction"
-    )
-    val barColor by animateColorAsState(
+private fun SensorReadingPanel(x: Float, y: Float, z: Float, verticalIntensity: Float, isTracking: Boolean) {
+    val intensityColor by animateColorAsState(
         targetValue = when {
             !isTracking -> MaterialTheme.colorScheme.onSurfaceVariant
-            intensity >= IMPACT_THRESHOLD -> MaterialTheme.colorScheme.error
-            intensity >= WARNING_THRESHOLD -> MaterialTheme.colorScheme.primary
+            verticalIntensity >= IMPACT_THRESHOLD -> MaterialTheme.colorScheme.error
+            verticalIntensity >= WARNING_THRESHOLD -> MaterialTheme.colorScheme.primary
             else -> MaterialTheme.colorScheme.tertiary
         },
         label = "sensorIntensityColor"
@@ -308,30 +328,89 @@ private fun SensorIntensityBar(intensity: Float, isTracking: Boolean) {
             Text(
                 text = when {
                     !isTracking -> stringResource(R.string.common_placeholder_dash)
-                    intensity >= IMPACT_THRESHOLD -> stringResource(R.string.tracker_impact_label)
-                    else -> stringResource(R.string.tracker_sensor_value_format, intensity)
+                    verticalIntensity >= IMPACT_THRESHOLD -> stringResource(R.string.tracker_impact_label)
+                    else -> stringResource(R.string.tracker_sensor_value_format, verticalIntensity)
                 },
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
-                color = barColor
+                color = intensityColor
             )
         }
-        Spacer(modifier = Modifier.height(6.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(14.dp)
-                .clip(RoundedCornerShape(7.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(fraction)
-                    .clip(RoundedCornerShape(7.dp))
-                    .background(barColor)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            AxisReadingChip(stringResource(R.string.tracker_axis_x), x, AXIS_X_COLOR)
+            AxisReadingChip(stringResource(R.string.tracker_axis_y), y, AXIS_Y_COLOR)
+            AxisReadingChip(stringResource(R.string.tracker_axis_z), z, AXIS_Z_COLOR)
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        SensorAxisGizmo(x = x, y = y, z = z)
+
+        Text(
+            text = stringResource(R.string.tracker_z_only_detection_caption),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun AxisReadingChip(axisLabel: String, value: Float, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(50)).background(color))
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = stringResource(R.string.tracker_axis_value_format, axisLabel, value),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/** Draws raw X/Y/Z as three spikes from a shared origin along fixed isometric directions — a live
+ * "3D" readout of the raw vector, instead of the three axes overlapping as line traces over time
+ * (compare the debug/classification screen's post-hoc SensorWindowChart, which plots history and
+ * so needs that line-chart shape; this widget only ever shows the current instant). Context only:
+ * the value that actually decides "this is a pothole" is shown, dynamically colored, in the
+ * header above — see SensorReadingPanel. */
+@Composable
+private fun SensorAxisGizmo(x: Float, y: Float, z: Float, modifier: Modifier = Modifier) {
+    val guideColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+    val originColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    Canvas(modifier = modifier.fillMaxWidth().height(150.dp)) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val guideLength = size.minDimension / 2.1f
+        val scale = guideLength / MAX_SENSOR_SCALE
+
+        fun drawGuide(direction: Offset) {
+            drawLine(
+                color = guideColor,
+                start = center,
+                end = center + direction * guideLength,
+                strokeWidth = 2f,
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
             )
         }
+        drawGuide(AXIS_X_DIR)
+        drawGuide(AXIS_Y_DIR)
+        drawGuide(AXIS_Z_DIR)
+
+        fun drawReading(direction: Offset, value: Float, color: Color) {
+            val length = value.coerceIn(-MAX_SENSOR_SCALE, MAX_SENSOR_SCALE) * scale
+            val tip = center + direction * length
+            drawLine(color = color, start = center, end = tip, strokeWidth = 6.dp.toPx(), cap = StrokeCap.Round)
+            drawCircle(color = color, radius = 5.dp.toPx(), center = tip)
+        }
+        drawReading(AXIS_X_DIR, x, AXIS_X_COLOR)
+        drawReading(AXIS_Y_DIR, y, AXIS_Y_COLOR)
+        drawReading(AXIS_Z_DIR, z, AXIS_Z_COLOR)
+
+        drawCircle(color = originColor, radius = 4.dp.toPx(), center = center)
     }
 }
 

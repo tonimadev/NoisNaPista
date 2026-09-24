@@ -9,5 +9,5 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 abstract class SensorModule {
     @Binds
-    abstract fun bindAccelerometerSensor(impl: AndroidAccelerometerSensor): AccelerometerSensor
+    abstract fun bindMotionSensor(impl: AndroidMotionSensor): MotionSensor
 }

@@ -29,7 +29,15 @@ data class TrackerUiState(
     val currentLocation: LocationPoint? = null,
     val locationPermissionGranted: Boolean = false,
     val notificationPermissionGranted: Boolean = false,
-    /** Live raw accelerometer Z-axis magnitude (m/s²), for the on-screen sensor bar. */
+    /** Live raw accelerometer reading (m/s²), all three axes — context only, shown as-is on the
+     * Home screen's sensor panel. */
+    val sensorX: Float = 0f,
+    val sensorY: Float = 0f,
+    val sensorZ: Float = 0f,
+    /** The gravity-corrected vertical acceleration magnitude — the actual number PotholeDetector
+     * triggers on, independent of how the phone is mounted (see PotholeDetector.
+     * computeVerticalAcceleration). Not simply abs(sensorZ): a phone mounted at an angle can have
+     * a real bump show up mostly on X or Y instead. */
     val sensorIntensity: Float = 0f
 )
 
@@ -84,8 +92,13 @@ class TrackerViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            potholeDetector.currentZAxis.collect { z ->
-                _uiState.update { it.copy(sensorIntensity = z) }
+            potholeDetector.currentAcceleration.collect { sample ->
+                _uiState.update { it.copy(sensorX = sample.x, sensorY = sample.y, sensorZ = sample.z) }
+            }
+        }
+        viewModelScope.launch {
+            potholeDetector.currentVerticalAcceleration.collect { intensity ->
+                _uiState.update { it.copy(sensorIntensity = intensity) }
             }
         }
         // Fonte de verdade de isTracking: nunca setada "otimisticamente" a partir do clique do
