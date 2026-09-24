@@ -1,15 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Camada monocromática (ícones com tema, Android 13+): o sistema ignora a cor e usa só o
-         alfa. Pin de mapa simples (clássico, com furo redondo), sem a cratera. -->
-    <group android:scaleX="4.5" android:scaleY="4.5">
-        <path
-            android:fillColor="#FFFFFF"
-            android:fillType="evenOdd"
-            android:pathData="M12,2C8.13,2 5,5.13 5,9c0,5.25 7,13 7,13s7,-7.75 7,-13c0,-3.87 -3.13,-7 -7,-7z
-                               M12,11.5c-1.38,0 -2.5,-1.12 -2.5,-2.5s1.12,-2.5 2.5,-2.5 2.5,1.12 2.5,2.5 -1.12,2.5 -2.5,2.5z" />
-    </group>
+    <!-- Camada monocromática (ícones com tema, Android 13+): o sistema usa só o alfa. Mesma pista
+         do foreground, com a faixa tracejada e o buraco recortados (evenOdd). -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M24,108L50,30L58,30L84,108Z M53.5,34L54.5,34L54.7,39L53.3,39Z M53.1,43L54.9,43L55.2,49L52.8,49Z M52.6,53L55.4,53L55.7,59L52.3,59Z M51.6,82L56.4,82L57,96L51,96Z M42,71.5C41.5,68.5 45,66.8 48.5,66.6C50.5,65.6 53,66.3 55,65.9C58.5,65.6 62.5,66.2 64.8,67.6C67,68.8 66.6,70.6 67,72C67.3,74.5 64.5,76.3 61,76.9C58.5,77.7 55.5,77.2 53,77.6C49.5,77.9 45.5,77 43.6,75.4C42.4,74.4 42.2,72.8 42,71.5Z" />
 </vector>
