@@ -1,6 +1,7 @@
 package digital.tonima.noisnapista.feature.map.impl
 
 import android.content.Context
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -18,6 +19,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -127,7 +129,10 @@ fun MapScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            cameraPositionState = cameraPositionState
+            cameraPositionState = cameraPositionState,
+            // Sobe os controles do próprio mapa (zoom, logo do Google) acima do FAB de atualizar,
+            // que ocupa o mesmo canto inferior direito: 56dp do FAB + 16dp de margem + folga.
+            contentPadding = PaddingValues(bottom = 80.dp)
         ) {
             currentLocation?.let {
                 Marker(
