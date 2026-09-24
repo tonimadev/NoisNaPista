@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import digital.tonima.noisnapista.core.data.CityRepository
+import digital.tonima.noisnapista.core.data.RankingLocationPreferences
 import digital.tonima.noisnapista.core.location.LocationProvider
 import digital.tonima.noisnapista.core.model.CityRanking
 import digital.tonima.noisnapista.core.model.CityRankingSortBy
@@ -39,7 +40,8 @@ sealed interface RankingUiEffect {
 @HiltViewModel
 class RankingViewModel @Inject constructor(
     private val cityRepository: CityRepository,
-    private val locationProvider: LocationProvider
+    private val locationProvider: LocationProvider,
+    private val locationPreferences: RankingLocationPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RankingUiState())
@@ -50,26 +52,46 @@ class RankingViewModel @Inject constructor(
 
     // Kept outside UiState (not something the screen renders directly) so switching the sort
     // metric can silently re-fetch "minha cidade"'s rank for the new metric without asking the
-    // OS for a fresh GPS fix every time.
+    // OS for a fresh GPS fix every time. Also persisted (RankingLocationPreferences): this
+    // ViewModel is recreated on every visit to the tab, and without it each visit fell back to
+    // "Usar minha localização" — a new GPS fix, and a permission prompt for anyone who granted
+    // location "só desta vez".
     private var lastLat: Double? = null
     private var lastLon: Double? = null
 
     init {
         // Silent on the automatic first load — an unreachable backend shouldn't greet the user
         // with an error the moment they open the screen.
-        refresh(notifyOnFailure = false)
+        refreshRanking(notifyOnFailure = false)
+        viewModelScope.launch {
+            val (lat, lon) = locationPreferences.getLastLocation() ?: return@launch
+            // The user may have already tapped "Usar minha localização" while this was loading.
+            if (lastLat != null) return@launch
+            lastLat = lat
+            lastLon = lon
+            refreshMyCity(lat, lon, notifyOnFailure = false)
+        }
     }
 
     fun onSortByChanged(sortBy: CityRankingSortBy) {
         if (sortBy == _uiState.value.sortBy) return
         _uiState.update { it.copy(sortBy = sortBy) }
-        refresh(notifyOnFailure = true)
+        refreshRanking(notifyOnFailure = true)
         val lat = lastLat
         val lon = lastLon
         if (lat != null && lon != null) refreshMyCity(lat, lon, notifyOnFailure = false)
     }
 
-    fun refresh(notifyOnFailure: Boolean = true) {
+    /** Re-fetches the ranking and, if known, "minha cidade" from the saved location — never a new
+     * GPS fix; that only happens when the user asks for it via [findMyCity]. */
+    fun refresh() {
+        refreshRanking(notifyOnFailure = true)
+        val lat = lastLat
+        val lon = lastLon
+        if (lat != null && lon != null) refreshMyCity(lat, lon, notifyOnFailure = false)
+    }
+
+    private fun refreshRanking(notifyOnFailure: Boolean) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val sortBy = _uiState.value.sortBy
@@ -90,7 +112,8 @@ class RankingViewModel @Inject constructor(
         }
     }
 
-    /** Finds the user's current location, then resolves and shows their city's ranking row. */
+    /** Takes a fresh location fix (first use, or the card's "atualizar localização" button), saves
+     * it for later visits, then resolves and shows their city's ranking row. */
     fun findMyCity() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLocatingMyCity = true) }
@@ -102,6 +125,7 @@ class RankingViewModel @Inject constructor(
             }
             lastLat = location.latitude
             lastLon = location.longitude
+            locationPreferences.saveLastLocation(location.latitude, location.longitude)
             refreshMyCity(location.latitude, location.longitude, notifyOnFailure = true)
         }
     }
