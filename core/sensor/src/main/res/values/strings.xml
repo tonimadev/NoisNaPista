@@ -1,0 +1,6 @@
+<resources>
+    <string name="tracking_notification_title">Detectando buracos na pista</string>
+    <string name="tracking_notification_text">Pode bloquear a tela e dirigir. Toque para abrir o app.</string>
+    <string name="tracking_notification_stop_action">Pausar detecção</string>
+    <string name="tracking_notification_channel_name">Detecção de buracos</string>
+</resources>

@@ -1,16 +1,16 @@
 <resources>
-    <string name="common_no_pothole_detected">Nenhum buraco detectado até o momento.</string>
+    <string name="common_no_pothole_detected">Nenhum buraco por aqui ainda. Ative a detecção e dirija normalmente — os buracos que você passar aparecem nesta lista.</string>
     <string name="common_no_maps_app_found">Nenhum app de mapas encontrado</string>
     <string name="common_placeholder_dash">—</string>
     <string name="common_refresh">Atualizar</string>
     <string name="common_back_cd">Voltar</string>
 
     <string name="tracker_app_title">NóisNaPista</string>
-    <string name="tracker_app_subtitle">Buracos na Pista</string>
+    <string name="tracker_app_subtitle">Mapa colaborativo de buracos</string>
     <string name="tracker_current_location_label">Sua Localização Atual:</string>
     <string name="tracker_lat_lon_format">Lat: %1$.5f, Lon: %2$.5f</string>
     <string name="tracker_waiting_gps">Aguardando sinal de GPS...</string>
-    <string name="tracker_recent_activity_title">Atividade Recente</string>
+    <string name="tracker_recent_activity_title">Seus buracos recentes</string>
     <string name="tracker_gps_label">GPS: </string>
     <string name="tracker_gps_active">Ativo</string>
     <string name="tracker_gps_inactive">Inativo</string>
@@ -27,10 +27,42 @@
     <string name="tracker_z_only_detection_caption">O valor acima já é corrigido pela gravidade e funciona mesmo com o celular montado em ângulo — X/Y/Z abaixo são os valores brutos, só de referência.</string>
     <string name="tracker_marker_you_are_here">Você está aqui</string>
     <string name="tracker_marker_pothole_severity_format">Buraco - Severidade: %1$s</string>
-    <string name="tracker_stop_button">Parar Rastreamento</string>
-    <string name="tracker_start_button">Iniciar Rastreamento</string>
-    <string name="tracker_recent_item_format">%1$s - Lat: %2$.4f, Lon: %3$.4f</string>
-    <string name="tracker_location_permission_required">Permissão de localização necessária</string>
+    <string name="tracker_stop_button">Pausar detecção</string>
+    <string name="tracker_start_button">Ativar detecção</string>
+    <string name="tracker_recent_item_title_format">Buraco detectado em %1$s</string>
+    <string name="tracker_severity_high">Impacto forte</string>
+    <string name="tracker_severity_medium">Impacto médio</string>
+    <string name="tracker_severity_low">Impacto leve</string>
+
+    <string name="tracker_status_off_title">Detecção desligada</string>
+    <string name="tracker_status_off_body">O app só encontra buracos com a detecção ligada. Ative antes de sair dirigindo.</string>
+    <string name="tracker_status_off_needs_location_body">O app só encontra buracos com a detecção ligada. Ao ativar, vamos pedir sua localização para marcar onde cada buraco está.</string>
+    <string name="tracker_status_on_title">Detectando buracos</string>
+    <string name="tracker_status_on_body">Pode bloquear a tela e dirigir. Para pausar, use o botão abaixo ou a notificação.</string>
+    <plurals name="tracker_pothole_count_format">
+        <item quantity="one">Você já ajudou a mapear %1$d buraco.</item>
+        <item quantity="many">Você já ajudou a mapear %1$d buracos.</item>
+        <item quantity="other">Você já ajudou a mapear %1$d buracos.</item>
+    </plurals>
+
+    <string name="tracker_how_it_works_title">Como funciona</string>
+    <string name="tracker_how_it_works_step1">Toque em \"Ativar detecção\" e permita o acesso à localização.</string>
+    <string name="tracker_how_it_works_step2">Deixe o celular num suporte ou em um lugar firme do carro — solto no banco ou no bolso a leitura fica menos precisa.</string>
+    <string name="tracker_how_it_works_step3">Dirija normalmente. Os buracos que você passar aparecem aqui e no mapa da comunidade.</string>
+
+    <string name="tracker_sensor_details_toggle">Ver sensores em tempo real</string>
+
+    <string name="tracker_permission_rationale_title">Localização para marcar os buracos</string>
+    <string name="tracker_permission_rationale_body">Para saber onde está cada buraco, o app usa o GPS. Em segundo plano, ele só é usado enquanto a detecção estiver ligada. Os relatos são anônimos: o mapa mostra o buraco, nunca quem passou por ele.\n\nNa próxima tela, escolha \"Durante o uso do app\" e mantenha a localização precisa ativada.</string>
+    <string name="tracker_permission_rationale_confirm">Continuar</string>
+    <string name="tracker_permission_precise_title">Precisamos da localização precisa</string>
+    <string name="tracker_permission_precise_body">Com a localização aproximada, o buraco pode ser marcado a centenas de metros do lugar certo. Ative a opção \"Usar localização precisa\" para que o mapa seja útil.</string>
+    <string name="tracker_permission_precise_confirm">Ativar precisa</string>
+    <string name="tracker_permission_blocked_title">Localização bloqueada</string>
+    <string name="tracker_permission_blocked_body">O acesso à localização foi negado, então o Android não deixa mais o app pedir. Para ativar a detecção, abra as configurações do app, vá em Permissões › Localização e escolha \"Permitir durante o uso do app\" com a localização precisa ativada.</string>
+    <string name="tracker_permission_open_settings">Abrir configurações</string>
+    <string name="tracker_permission_not_now">Agora não</string>
+    <string name="tracker_location_permission_required">Sem acesso à localização não dá pra marcar os buracos no mapa.</string>
 
     <string name="history_title">Histórico de Detecções</string>
     <string name="history_community_header">Comunidade por perto</string>
