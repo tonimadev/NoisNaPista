@@ -1,14 +1,18 @@
 package digital.tonima.noisnapista.feature.map.impl
 
 import android.content.Context
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -16,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -64,6 +69,9 @@ fun MapScreen(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is MapUiEffect.ShowMessage -> snackbarHostState.showSnackbar(context.getString(effect.messageRes))
+                is MapUiEffect.CenterOn -> cameraPositionState.animate(
+                    CameraUpdateFactory.newLatLngZoom(LatLng(effect.location.latitude, effect.location.longitude), 16f)
+                )
             }
         }
     }
@@ -120,8 +128,16 @@ fun MapScreen(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { viewModel.refreshCommunityPotholes() }) {
-                Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.map_refresh_community_cd))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                SmallFloatingActionButton(onClick = { viewModel.recenter() }) {
+                    Icon(Icons.Rounded.MyLocation, contentDescription = stringResource(R.string.map_recenter_cd))
+                }
+                FloatingActionButton(onClick = { viewModel.refreshCommunityPotholes() }) {
+                    Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.map_refresh_community_cd))
+                }
             }
         }
     ) { padding ->
@@ -130,9 +146,10 @@ fun MapScreen(
                 .fillMaxSize()
                 .padding(padding),
             cameraPositionState = cameraPositionState,
-            // Sobe os controles do próprio mapa (zoom, logo do Google) acima do FAB de atualizar,
-            // que ocupa o mesmo canto inferior direito: 56dp do FAB + 16dp de margem + folga.
-            contentPadding = PaddingValues(bottom = 80.dp)
+            // Sobe os controles do próprio mapa (zoom, logo do Google) acima dos FABs, que ocupam
+            // o mesmo canto inferior direito: 56dp (atualizar) + 16dp + 40dp (recentralizar) +
+            // 16dp de margem + folga.
+            contentPadding = PaddingValues(bottom = 136.dp)
         ) {
             currentLocation?.let {
                 Marker(

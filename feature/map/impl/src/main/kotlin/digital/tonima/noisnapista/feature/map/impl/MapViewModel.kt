@@ -26,13 +26,14 @@ import javax.inject.Inject
 
 sealed interface MapUiEffect {
     data class ShowMessage(@StringRes val messageRes: Int) : MapUiEffect
+    data class CenterOn(val location: LocationPoint) : MapUiEffect
 }
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val repository: PotholeRepository,
     private val locationProvider: LocationProvider,
-    potholeDetector: PotholeDetector
+    private val potholeDetector: PotholeDetector
 ) : ViewModel() {
     val potholes: StateFlow<List<Pothole>> = repository.getActivePotholes()
         .stateIn(
@@ -70,6 +71,19 @@ class MapViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             _previewLocation.value = locationProvider.getCurrentLocation()
+        }
+    }
+
+    /** Botão de recentralizar: com o rastreamento ativo usa o fix mais recente dele; sem
+     * rastreamento, busca um fix novo (o de init pode estar velho se o usuário se moveu). */
+    fun recenter() {
+        viewModelScope.launch {
+            val location = potholeDetector.currentLocation.value
+                ?: locationProvider.getCurrentLocation()?.also { _previewLocation.value = it }
+            _uiEffect.send(
+                if (location != null) MapUiEffect.CenterOn(location)
+                else MapUiEffect.ShowMessage(R.string.map_location_unavailable)
+            )
         }
     }
 
