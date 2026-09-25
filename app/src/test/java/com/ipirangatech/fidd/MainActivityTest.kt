@@ -6,25 +6,15 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import com.ipirangatech.fidd.core.billing.BillingModule
 import com.ipirangatech.fidd.core.billing.RemoveAdsRepository
 import com.ipirangatech.fidd.core.data.CityRepository
-import com.ipirangatech.fidd.core.testing.FakeRemoveAdsRepository
-import com.ipirangatech.fidd.core.ads.R as AdsR
-import org.junit.Assert.assertEquals
 import com.ipirangatech.fidd.core.data.DataModule
 import com.ipirangatech.fidd.core.data.OnboardingPreferences
 import com.ipirangatech.fidd.core.data.PotholeRepository
 import com.ipirangatech.fidd.core.data.PreferencesModule
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import com.ipirangatech.fidd.core.testing.testPreferencesDataStore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import org.junit.After
-import java.nio.file.Files
 import com.ipirangatech.fidd.core.location.LocationModule
 import com.ipirangatech.fidd.core.location.LocationProvider
 import com.ipirangatech.fidd.core.model.DetectionDebugEntry
@@ -35,13 +25,21 @@ import com.ipirangatech.fidd.core.testing.FakeCityRepository
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakeMotionSensor
 import com.ipirangatech.fidd.core.testing.FakePotholeRepository
+import com.ipirangatech.fidd.core.testing.FakeRemoveAdsRepository
 import com.ipirangatech.fidd.core.testing.testPothole
+import com.ipirangatech.fidd.core.testing.testPreferencesDataStore
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -49,7 +47,9 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.nio.file.Files
 import javax.inject.Inject
+import com.ipirangatech.fidd.core.ads.R as AdsR
 import com.ipirangatech.fidd.feature.map.impl.R as MapR
 import com.ipirangatech.fidd.feature.onboarding.R as OnboardingR
 import com.ipirangatech.fidd.feature.ranking.impl.R as RankingR
@@ -60,11 +60,16 @@ import com.ipirangatech.fidd.feature.tracker.impl.R as TrackerR
  * swapped for fakes so nothing touches the network, GPS or sensors.
  */
 @HiltAndroidTest
-@UninstallModules(DataModule::class, PreferencesModule::class, LocationModule::class, SensorModule::class, BillingModule::class)
+@UninstallModules(
+    DataModule::class,
+    PreferencesModule::class,
+    LocationModule::class,
+    SensorModule::class,
+    BillingModule::class,
+)
 @Config(application = HiltTestApplication::class, qualifiers = "w411dp-h2000dp")
 @RunWith(RobolectricTestRunner::class)
 class MainActivityTest {
-
     private val hiltRule = HiltAndroidRule(this)
     private val compose = createAndroidComposeRule<MainActivity>()
 
@@ -73,11 +78,18 @@ class MainActivityTest {
 
     @BindValue
     @JvmField
-    val potholeRepository: PotholeRepository = FakePotholeRepository().apply {
-        debugEntries.value = listOf(
-            DetectionDebugEntry(testPothole(id = "debug-1", sessionId = "trip"), null, DetectionLabel.UNLABELED, "")
-        )
-    }
+    val potholeRepository: PotholeRepository =
+        FakePotholeRepository().apply {
+            debugEntries.value =
+                listOf(
+                    DetectionDebugEntry(
+                        testPothole(id = "debug-1", sessionId = "trip"),
+                        null,
+                        DetectionLabel.UNLABELED,
+                        "",
+                    ),
+                )
+        }
 
     @BindValue
     @JvmField
@@ -116,9 +128,10 @@ class MainActivityTest {
 
     private fun str(id: Int) = compose.activity.getString(id)
 
-    private fun waitForText(text: String) = compose.waitUntil(5_000) {
-        compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
-    }
+    private fun waitForText(text: String) =
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
+        }
 
     private fun completeOnboarding() {
         runBlocking { onboardingPreferences.markCompleted() }
@@ -184,11 +197,16 @@ class MainActivityTest {
 
 /** Wide screens show Home and the full map side by side instead of switching tabs. */
 @HiltAndroidTest
-@UninstallModules(DataModule::class, PreferencesModule::class, LocationModule::class, SensorModule::class, BillingModule::class)
+@UninstallModules(
+    DataModule::class,
+    PreferencesModule::class,
+    LocationModule::class,
+    SensorModule::class,
+    BillingModule::class,
+)
 @Config(application = HiltTestApplication::class, qualifiers = "w1280dp-h800dp-night")
 @RunWith(RobolectricTestRunner::class)
 class MainActivityExpandedTest {
-
     private val hiltRule = HiltAndroidRule(this)
     private val compose = createAndroidComposeRule<MainActivity>()
 

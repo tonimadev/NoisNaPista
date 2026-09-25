@@ -3,13 +3,13 @@ package com.ipirangatech.fidd.feature.map.impl
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.material.icons.rounded.Refresh
@@ -62,15 +62,16 @@ fun MapScreen(
     modifier: Modifier = Modifier,
     // Banner de anúncio montado pelo app (null = sem anúncio: comprou "Remover anúncios" ou a
     // detecção está ativa). A feature só reserva o lugar; não depende do SDK de anúncios.
-    adBanner: (@Composable () -> Unit)? = null
+    adBanner: (@Composable () -> Unit)? = null,
 ) {
     val potholes by viewModel.potholes.collectAsStateWithLifecycle()
     val communityPotholes by viewModel.communityPotholes.collectAsStateWithLifecycle()
     val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(-23.5505, -46.6333), 10f)
-    }
+    val cameraPositionState =
+        rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(LatLng(-23.5505, -46.6333), 10f)
+        }
     val snackbarHostState = remember { SnackbarHostState() }
     val youAreHereLabel = stringResource(R.string.map_marker_you_are_here)
 
@@ -78,9 +79,13 @@ fun MapScreen(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is MapUiEffect.ShowMessage -> snackbarHostState.showSnackbar(context.getString(effect.messageRes))
-                is MapUiEffect.CenterOn -> cameraPositionState.animate(
-                    CameraUpdateFactory.newLatLngZoom(LatLng(effect.location.latitude, effect.location.longitude), 16f)
-                )
+                is MapUiEffect.CenterOn ->
+                    cameraPositionState.animate(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(effect.location.latitude, effect.location.longitude),
+                            16f,
+                        ),
+                    )
             }
         }
     }
@@ -89,10 +94,11 @@ fun MapScreen(
     // GPS recebido enquanto o rastreamento está ativo.
     LaunchedEffect(currentLocation) {
         currentLocation?.let {
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                LatLng(it.latitude, it.longitude),
-                16f
-            )
+            cameraPositionState.position =
+                CameraPosition.fromLatLngZoom(
+                    LatLng(it.latitude, it.longitude),
+                    16f,
+                )
         }
     }
 
@@ -100,8 +106,11 @@ fun MapScreen(
     // é nula até o mapa carregar, então a primeira busca sai assim que ele fica pronto.
     LaunchedEffect(cameraPositionState) {
         snapshotFlow {
-            if (cameraPositionState.isMoving) null
-            else cameraPositionState.projection?.visibleRegion?.latLngBounds
+            if (cameraPositionState.isMoving) {
+                null
+            } else {
+                cameraPositionState.projection?.visibleRegion?.latLngBounds
+            }
         }
             .filterNotNull()
             .distinctUntilChanged()
@@ -109,28 +118,42 @@ fun MapScreen(
     }
 
     val pendingStatusFallback = stringResource(R.string.map_status_pending_fallback)
-    val mapItems = remember(potholes, communityPotholes, pendingStatusFallback) {
-        // Uma detecção própria já sincronizada também volta na lista da comunidade — mostra só
-        // o pino próprio, que tem mais detalhe.
-        val ownServerIds = potholes.mapNotNullTo(HashSet()) { it.serverId }
-        potholes.map { pothole ->
-            PotholeMapItem(
-                key = "local-${pothole.id}",
-                position = LatLng(pothole.location.latitude, pothole.location.longitude),
-                title = context.getString(R.string.map_marker_own_format, pothole.severity.toString()),
-                snippet = context.getString(R.string.map_marker_detected_at_format, Date(pothole.timestamp).toString()),
-                craterColor = PotholeMarker.severityColor(pothole.severity)
-            )
-        } + communityPotholes.filter { it.serverId !in ownServerIds }.map { pothole ->
-            PotholeMapItem(
-                key = "community-${pothole.serverId}",
-                position = LatLng(pothole.location.latitude, pothole.location.longitude),
-                title = context.getString(R.string.map_marker_community_format, pothole.status ?: pendingStatusFallback),
-                snippet = context.getString(R.string.map_report_count_format, pothole.distinctReporterCount),
-                craterColor = PotholeMarker.COLOR_COMMUNITY
-            )
+    val mapItems =
+        remember(potholes, communityPotholes, pendingStatusFallback) {
+            // Uma detecção própria já sincronizada também volta na lista da comunidade — mostra só
+            // o pino próprio, que tem mais detalhe.
+            val ownServerIds = potholes.mapNotNullTo(HashSet()) { it.serverId }
+            potholes.map { pothole ->
+                PotholeMapItem(
+                    key = "local-${pothole.id}",
+                    position = LatLng(pothole.location.latitude, pothole.location.longitude),
+                    title = context.getString(R.string.map_marker_own_format, pothole.severity.toString()),
+                    snippet =
+                        context.getString(
+                            R.string.map_marker_detected_at_format,
+                            Date(pothole.timestamp).toString(),
+                        ),
+                    craterColor = PotholeMarker.severityColor(pothole.severity),
+                )
+            } +
+                communityPotholes.filter { it.serverId !in ownServerIds }.map { pothole ->
+                    PotholeMapItem(
+                        key = "community-${pothole.serverId}",
+                        position = LatLng(pothole.location.latitude, pothole.location.longitude),
+                        title =
+                            context.getString(
+                                R.string.map_marker_community_format,
+                                pothole.status ?: pendingStatusFallback,
+                            ),
+                        snippet =
+                            context.getString(
+                                R.string.map_report_count_format,
+                                pothole.distinctReporterCount,
+                            ),
+                        craterColor = PotholeMarker.COLOR_COMMUNITY,
+                    )
+                }
         }
-    }
 
     Scaffold(
         modifier = modifier,
@@ -145,7 +168,7 @@ fun MapScreen(
         floatingActionButton = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 SmallFloatingActionButton(onClick = { viewModel.recenter() }) {
                     Icon(Icons.Rounded.MyLocation, contentDescription = stringResource(R.string.map_recenter_cd))
@@ -154,23 +177,24 @@ fun MapScreen(
                     Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.map_refresh_community_cd))
                 }
             }
-        }
+        },
     ) { padding ->
         GoogleMap(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
             cameraPositionState = cameraPositionState,
             // Sobe os controles do próprio mapa (zoom, logo do Google) acima dos FABs, que ocupam
             // o mesmo canto inferior direito: 56dp (atualizar) + 16dp + 40dp (recentralizar) +
             // 16dp de margem + folga.
-            contentPadding = PaddingValues(bottom = 136.dp)
+            contentPadding = PaddingValues(bottom = 136.dp),
         ) {
             currentLocation?.let {
                 Marker(
                     state = rememberUpdatedMarkerState(position = LatLng(it.latitude, it.longitude)),
                     title = youAreHereLabel,
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
                 )
             }
             // Agrupa pinos próximos em um único marcador com contagem: milhares de Markers
@@ -181,7 +205,7 @@ fun MapScreen(
                 clusterManager.renderer = PotholeClusterRenderer(context, map, clusterManager)
                 clusterManager.setOnClusterClickListener { cluster ->
                     map.animateCamera(
-                        CameraUpdateFactory.newLatLngZoom(cluster.position, map.cameraPosition.zoom + 2f)
+                        CameraUpdateFactory.newLatLngZoom(cluster.position, map.cameraPosition.zoom + 2f),
                     )
                     true
                 }
@@ -196,7 +220,7 @@ private data class PotholeMapItem(
     override val position: LatLng,
     override val title: String,
     override val snippet: String,
-    val craterColor: Int
+    val craterColor: Int,
 ) : ClusterItem {
     override val zIndex: Float? get() = null
 }
@@ -206,29 +230,37 @@ private data class PotholeMapItem(
 private class PotholeClusterRenderer(
     private val context: Context,
     map: GoogleMap,
-    clusterManager: ClusterManager<PotholeMapItem>
+    clusterManager: ClusterManager<PotholeMapItem>,
 ) : DefaultClusterRenderer<PotholeMapItem>(context, map, clusterManager) {
     private val icons = HashMap<Int, BitmapDescriptor>()
 
-    private fun icon(item: PotholeMapItem) = icons.getOrPut(item.craterColor) {
-        BitmapDescriptorFactory.fromBitmap(PotholeMarker.bitmap(context, item.craterColor))
-    }
+    private fun icon(item: PotholeMapItem) =
+        icons.getOrPut(item.craterColor) {
+            BitmapDescriptorFactory.fromBitmap(PotholeMarker.bitmap(context, item.craterColor))
+        }
 
-    override fun onBeforeClusterItemRendered(item: PotholeMapItem, markerOptions: MarkerOptions) {
+    override fun onBeforeClusterItemRendered(
+        item: PotholeMapItem,
+        markerOptions: MarkerOptions,
+    ) {
         super.onBeforeClusterItemRendered(item, markerOptions)
         markerOptions.icon(icon(item)).anchor(0.5f, 0.5f)
     }
 
-    override fun onClusterItemUpdated(item: PotholeMapItem, marker: com.google.android.gms.maps.model.Marker) {
+    override fun onClusterItemUpdated(
+        item: PotholeMapItem,
+        marker: com.google.android.gms.maps.model.Marker,
+    ) {
         super.onClusterItemUpdated(item, marker)
         marker.setIcon(icon(item))
         marker.setAnchor(0.5f, 0.5f)
     }
 }
 
-private fun LatLngBounds.toGeoBounds() = GeoBounds(
-    minLatitude = southwest.latitude,
-    minLongitude = southwest.longitude,
-    maxLatitude = northeast.latitude,
-    maxLongitude = northeast.longitude
-)
+private fun LatLngBounds.toGeoBounds() =
+    GeoBounds(
+        minLatitude = southwest.latitude,
+        minLongitude = southwest.longitude,
+        maxLatitude = northeast.latitude,
+        maxLongitude = northeast.longitude,
+    )

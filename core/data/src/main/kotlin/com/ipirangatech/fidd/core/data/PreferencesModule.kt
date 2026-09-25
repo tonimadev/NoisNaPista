@@ -18,6 +18,7 @@ private val Context.fiddDataStore: DataStore<Preferences> by preferencesDataStor
 object PreferencesModule {
     @Provides
     @Singleton
-    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
-        context.fiddDataStore
+    fun provideDataStore(
+        @ApplicationContext context: Context,
+    ): DataStore<Preferences> = context.fiddDataStore
 }

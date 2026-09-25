@@ -11,7 +11,6 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 class OnboardingViewModelTest {
-
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
@@ -19,16 +18,17 @@ class OnboardingViewModelTest {
     val tmp = TemporaryFolder()
 
     @Test
-    fun `state is unknown until read, then false, then true once finished`() = runTest {
-        val vm = OnboardingViewModel(OnboardingPreferences(testPreferencesDataStore(backgroundScope, tmp.root)))
+    fun `state is unknown until read, then false, then true once finished`() =
+        runTest {
+            val vm = OnboardingViewModel(OnboardingPreferences(testPreferencesDataStore(backgroundScope, tmp.root)))
 
-        vm.hasCompletedOnboarding.test {
-            var state = awaitItem()
-            if (state == null) state = awaitItem()
-            assertEquals(false, state)
+            vm.hasCompletedOnboarding.test {
+                var state = awaitItem()
+                if (state == null) state = awaitItem()
+                assertEquals(false, state)
 
-            vm.onOnboardingFinished()
-            assertEquals(true, awaitItem())
+                vm.onOnboardingFinished()
+                assertEquals(true, awaitItem())
+            }
         }
-    }
 }

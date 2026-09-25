@@ -10,7 +10,7 @@ data class DetectionDebugEntry(
     val pothole: Pothole,
     val sensorWindow: SensorWindow?,
     val label: DetectionLabel,
-    val note: String
+    val note: String,
 ) {
     /** Peak absolute Z-axis reading across the whole captured window, not just the trigger
      * sample — useful context when deciding whether a reading was a real pothole. */

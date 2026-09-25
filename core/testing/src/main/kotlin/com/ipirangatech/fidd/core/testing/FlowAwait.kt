@@ -14,11 +14,15 @@ import kotlin.time.Duration.Companion.seconds
  * Dispatchers.Default scope): plain `withTimeout` there uses virtual time and gives up instantly,
  * and `runBlocking` would block the scheduler the result depends on.
  */
-suspend fun <T> Flow<T>.awaitFirst(timeout: Duration = 3.seconds, predicate: (T) -> Boolean): T =
-    withContext(Dispatchers.Default) { withTimeout(timeout) { first(predicate) } }
+suspend fun <T> Flow<T>.awaitFirst(
+    timeout: Duration = 3.seconds,
+    predicate: (T) -> Boolean,
+): T = withContext(Dispatchers.Default) { withTimeout(timeout) { first(predicate) } }
 
 /** Real-time wait for [condition] to become true, polling every 10 ms. */
-suspend fun awaitCondition(timeout: Duration = 3.seconds, condition: () -> Boolean) =
-    withContext(Dispatchers.Default) {
-        withTimeout(timeout) { while (!condition()) kotlinx.coroutines.delay(10) }
-    }
+suspend fun awaitCondition(
+    timeout: Duration = 3.seconds,
+    condition: () -> Boolean,
+) = withContext(Dispatchers.Default) {
+    withTimeout(timeout) { while (!condition()) kotlinx.coroutines.delay(10) }
+}

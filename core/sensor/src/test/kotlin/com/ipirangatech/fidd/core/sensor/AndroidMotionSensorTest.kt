@@ -23,66 +23,78 @@ import org.robolectric.shadows.ShadowSensor
 
 @RunWith(RobolectricTestRunner::class)
 class AndroidMotionSensorTest {
-
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val shadowManager = shadowOf(sensorManager)
 
     private fun addSensor(type: Int): Sensor = ShadowSensor.newInstance(type).also { shadowManager.addSensor(it) }
 
-    private fun send(sensor: Sensor, x: Float, y: Float, z: Float, timestamp: Long) {
+    private fun send(
+        sensor: Sensor,
+        x: Float,
+        y: Float,
+        z: Float,
+        timestamp: Long,
+    ) {
         shadowManager.sendSensorEventToListeners(
-            SensorEventBuilder.newBuilder().setSensor(sensor).setValues(floatArrayOf(x, y, z)).setTimestamp(timestamp).build()
+            SensorEventBuilder.newBuilder().setSensor(
+                sensor,
+            ).setValues(floatArrayOf(x, y, z)).setTimestamp(timestamp).build(),
         )
     }
 
     @Test
-    fun `every stream is empty on a device without those sensors`() = runTest {
-        val motionSensor = AndroidMotionSensor(context)
+    fun `every stream is empty on a device without those sensors`() =
+        runTest {
+            val motionSensor = AndroidMotionSensor(context)
 
-        assertTrue(motionSensor.getAccelerationUpdates().toList().isEmpty())
-        assertTrue(motionSensor.getGravityUpdates().toList().isEmpty())
-        assertTrue(motionSensor.getRotationRateUpdates().toList().isEmpty())
-    }
-
-    @Test
-    fun `accelerometer and gravity events are mapped to samples and listeners are released`() = runTest(UnconfinedTestDispatcher()) {
-        val accelerometer = addSensor(Sensor.TYPE_ACCELEROMETER)
-        val gravity = addSensor(Sensor.TYPE_GRAVITY)
-        val motionSensor = AndroidMotionSensor(context)
-        val acceleration = mutableListOf<AccelerationSample>()
-        val gravityReadings = mutableListOf<AccelerationSample>()
-
-        val jobs = listOf(
-            launch { motionSensor.getAccelerationUpdates().collect { acceleration += it } },
-            launch { motionSensor.getGravityUpdates().collect { gravityReadings += it } }
-        )
-        send(accelerometer, 1f, 2f, 20f, timestamp = 42L)
-        send(gravity, 0f, 0f, 9.8f, timestamp = 43L)
-
-        assertEquals(listOf(AccelerationSample(1f, 2f, 20f, 42L)), acceleration)
-        assertEquals(listOf(AccelerationSample(0f, 0f, 9.8f, 43L)), gravityReadings)
-        jobs.forEach { it.cancel() }
-        assertTrue(shadowManager.listeners.isEmpty())
-    }
+            assertTrue(motionSensor.getAccelerationUpdates().toList().isEmpty())
+            assertTrue(motionSensor.getGravityUpdates().toList().isEmpty())
+            assertTrue(motionSensor.getRotationRateUpdates().toList().isEmpty())
+        }
 
     @Test
-    fun `gyroscope events are mapped to rotation samples`() = runTest(UnconfinedTestDispatcher()) {
-        val gyroscope = addSensor(Sensor.TYPE_GYROSCOPE)
-        val motionSensor = AndroidMotionSensor(context)
-        val rotation = async { motionSensor.getRotationRateUpdates().first() }
+    fun `accelerometer and gravity events are mapped to samples and listeners are released`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val accelerometer = addSensor(Sensor.TYPE_ACCELEROMETER)
+            val gravity = addSensor(Sensor.TYPE_GRAVITY)
+            val motionSensor = AndroidMotionSensor(context)
+            val acceleration = mutableListOf<AccelerationSample>()
+            val gravityReadings = mutableListOf<AccelerationSample>()
 
-        send(gyroscope, 0.1f, 0.2f, 0.3f, timestamp = 7L)
+            val jobs =
+                listOf(
+                    launch { motionSensor.getAccelerationUpdates().collect { acceleration += it } },
+                    launch { motionSensor.getGravityUpdates().collect { gravityReadings += it } },
+                )
+            send(accelerometer, 1f, 2f, 20f, timestamp = 42L)
+            send(gravity, 0f, 0f, 9.8f, timestamp = 43L)
 
-        assertEquals(RotationRateSample(0.1f, 0.2f, 0.3f, 7L), rotation.await())
-    }
+            assertEquals(listOf(AccelerationSample(1f, 2f, 20f, 42L)), acceleration)
+            assertEquals(listOf(AccelerationSample(0f, 0f, 9.8f, 43L)), gravityReadings)
+            jobs.forEach { it.cancel() }
+            assertTrue(shadowManager.listeners.isEmpty())
+        }
 
     @Test
-    fun `the dummy sensor never emits`() = runTest {
-        val dummy = DummyMotionSensor()
+    fun `gyroscope events are mapped to rotation samples`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val gyroscope = addSensor(Sensor.TYPE_GYROSCOPE)
+            val motionSensor = AndroidMotionSensor(context)
+            val rotation = async { motionSensor.getRotationRateUpdates().first() }
 
-        assertTrue(dummy.getAccelerationUpdates().toList().isEmpty())
-        assertTrue(dummy.getGravityUpdates().toList().isEmpty())
-        assertTrue(dummy.getRotationRateUpdates().toList().isEmpty())
-    }
+            send(gyroscope, 0.1f, 0.2f, 0.3f, timestamp = 7L)
+
+            assertEquals(RotationRateSample(0.1f, 0.2f, 0.3f, 7L), rotation.await())
+        }
+
+    @Test
+    fun `the dummy sensor never emits`() =
+        runTest {
+            val dummy = DummyMotionSensor()
+
+            assertTrue(dummy.getAccelerationUpdates().toList().isEmpty())
+            assertTrue(dummy.getGravityUpdates().toList().isEmpty())
+            assertTrue(dummy.getRotationRateUpdates().toList().isEmpty())
+        }
 }

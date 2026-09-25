@@ -9,7 +9,7 @@ data class PotholeReadingRequestDto(
     val latitude: Double,
     val longitude: Double,
     val severity: Float,
-    val timestamp: Long
+    val timestamp: Long,
 )
 
 /** Matches the backend's PotholeResponse — the public, anonymous shape of a pothole. */
@@ -22,13 +22,13 @@ data class PotholeResponseDto(
     val status: String,
     val readingCount: Int,
     val distinctReporterCount: Int,
-    val createdAt: String
+    val createdAt: String,
 )
 
 /** Matches the backend's PotholeBatchRequest (POST /api/v1/potholes/batch). */
 @JsonClass(generateAdapter = true)
 data class PotholeReadingBatchRequestDto(
-    val readings: List<PotholeReadingRequestDto>
+    val readings: List<PotholeReadingRequestDto>,
 ) {
     companion object {
         /** Mirrors the backend's `noisnapista.batch.max-size` default. */
@@ -41,5 +41,5 @@ data class PotholeReadingBatchRequestDto(
 data class PotholeBatchItemResponseDto(
     val clientId: String,
     val pothole: PotholeResponseDto? = null,
-    val error: String? = null
+    val error: String? = null,
 )

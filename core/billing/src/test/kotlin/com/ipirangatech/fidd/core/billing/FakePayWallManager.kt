@@ -17,11 +17,18 @@ class FakePayWallManager : PayWallManager {
 
     override fun disconnect() = Unit
 
-    override fun launchPurchase(activity: Activity, productId: String) {
+    override fun launchPurchase(
+        activity: Activity,
+        productId: String,
+    ) {
         purchases += productId
     }
 
-    override fun launchSubscription(activity: Activity, productId: String, basePlanId: String?) = Unit
+    override fun launchSubscription(
+        activity: Activity,
+        productId: String,
+        basePlanId: String?,
+    ) = Unit
 
     override fun refresh() = Unit
 }

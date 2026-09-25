@@ -21,18 +21,18 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:model"))
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.kotlinx.serialization.core)
+    implementation(project(":core:model"))
 
-    testImplementation(project(":core:testing"))
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.robolectric)
-    testImplementation(libs.mockk)
-    testImplementation(libs.turbine)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.turbine)
+    testImplementation(project(":core:testing"))
 }
 
 kover {

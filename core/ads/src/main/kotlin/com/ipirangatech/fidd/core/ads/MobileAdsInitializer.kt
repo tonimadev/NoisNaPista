@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 fun initializeMobileAds(
     context: Context,
     scope: CoroutineScope = CoroutineScope(Dispatchers.IO),
-    initialize: (Context) -> Unit = { MobileAds.initialize(it) }
+    initialize: (Context) -> Unit = { MobileAds.initialize(it) },
 ) {
     scope.launch {
         try {

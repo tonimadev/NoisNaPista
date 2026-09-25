@@ -1,5 +1,6 @@
 package com.ipirangatech.fidd.core.ads
 
+import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -15,7 +16,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import android.content.Context
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -35,7 +35,7 @@ class SponsoredBannerTest {
             SponsoredBanner(
                 adUnitId = "test-unit",
                 onRemoveAds = { removeClicks++ },
-                ad = { Box(it.testTag("ad")) }
+                ad = { Box(it.testTag("ad")) },
             )
         }
 
@@ -53,7 +53,12 @@ class SponsoredBannerTest {
             // Modo inspeção pula o loadAd: pedir anúncio de verdade na JVM dispara uma thread do SDK
             // que estoura sem o App ID do manifest. O que importa aqui é criar e liberar o AdView.
             CompositionLocalProvider(LocalInspectionMode provides true) {
-                if (show) AdMobBanner(adUnitId = "ca-app-pub-3940256099942544/9214589741", modifier = Modifier.testTag("banner"))
+                if (show) {
+                    AdMobBanner(
+                        adUnitId = "ca-app-pub-3940256099942544/9214589741",
+                        modifier = Modifier.testTag("banner"),
+                    )
+                }
             }
         }
         composeRule.onNodeWithTag("banner").assertExists()

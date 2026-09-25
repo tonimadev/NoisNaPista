@@ -10,10 +10,15 @@ import kotlinx.coroutines.flow.Flow
 
 interface PotholeRepository {
     fun getPotholes(): Flow<List<Pothole>>
+
     fun getActivePotholes(): Flow<List<Pothole>>
+
     suspend fun savePothole(pothole: Pothole)
+
     suspend fun delete(pothole: Pothole)
+
     suspend fun markFalseAlarm(pothole: Pothole)
+
     suspend fun syncPotholes()
 
     /** Persists a raw sensor burst captured around a detection — local only, for later offline
@@ -36,6 +41,13 @@ interface PotholeRepository {
      * window (when already captured) and current manual classification, newest first. */
     fun getDebugEntries(): Flow<List<DetectionDebugEntry>>
 
-    suspend fun updateDetectionLabel(potholeId: String, label: DetectionLabel)
-    suspend fun updateDetectionNote(potholeId: String, note: String)
+    suspend fun updateDetectionLabel(
+        potholeId: String,
+        label: DetectionLabel,
+    )
+
+    suspend fun updateDetectionNote(
+        potholeId: String,
+        note: String,
+    )
 }

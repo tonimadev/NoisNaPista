@@ -11,7 +11,7 @@ data class SensorWindowSample(
     val offsetMs: Long,
     val x: Float,
     val y: Float,
-    val z: Float
+    val z: Float,
 )
 
 /**
@@ -22,5 +22,5 @@ data class SensorWindowSample(
 @Serializable
 data class SensorWindow(
     val potholeId: String,
-    val samples: List<SensorWindowSample>
+    val samples: List<SensorWindowSample>,
 )

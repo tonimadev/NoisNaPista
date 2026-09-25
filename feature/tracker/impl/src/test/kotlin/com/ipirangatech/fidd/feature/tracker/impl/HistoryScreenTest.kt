@@ -1,27 +1,27 @@
 package com.ipirangatech.fidd.feature.tracker.impl
 
+import android.app.Application
+import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.test.onNodeWithTag
-import org.junit.Assert.assertTrue
-import android.app.Application
-import android.content.Intent
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakePotholeRepository
 import com.ipirangatech.fidd.core.testing.testLocation
 import com.ipirangatech.fidd.core.testing.testPothole
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,7 +33,6 @@ import org.robolectric.shadows.ShadowToast
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w411dp-h2000dp")
 class HistoryScreenTest {
-
     @get:Rule
     val compose = createComposeRule()
 
@@ -41,7 +40,10 @@ class HistoryScreenTest {
     private val repository = FakePotholeRepository()
     private val location = FakeLocationProvider(currentLocation = testLocation())
 
-    private fun str(id: Int, vararg args: Any) = app.getString(id, *args)
+    private fun str(
+        id: Int,
+        vararg args: Any,
+    ) = app.getString(id, *args)
 
     private fun setContent(adBanner: (@androidx.compose.runtime.Composable () -> Unit)? = null) {
         val vm = HistoryViewModel(repository, location)
@@ -69,10 +71,11 @@ class HistoryScreenTest {
 
     @Test
     fun `local detections show sync state and act on the repository`() {
-        repository.potholes.value = listOf(
-            testPothole(id = "synced", serverId = "srv-1"),
-            testPothole(id = "pending", timestamp = 1_600_000_000_000L)
-        )
+        repository.potholes.value =
+            listOf(
+                testPothole(id = "synced", serverId = "srv-1"),
+                testPothole(id = "pending", timestamp = 1_600_000_000_000L),
+            )
         setContent()
 
         compose.onNodeWithText(str(R.string.history_synced)).assertExists()
@@ -129,13 +132,14 @@ class HistoryScreenTest {
 
     @Test
     fun `community potholes can be voted fixed unless already fixed`() {
-        repository.nearbyResult = Result.success(
-            listOf(
-                testPothole(id = "srv-1", serverId = "srv-1", status = "CONFIRMED", distinctReporterCount = 3),
-                testPothole(id = "srv-2", serverId = "srv-2", status = "FIXED"),
-                testPothole(id = "srv-3", serverId = "srv-3", status = null)
+        repository.nearbyResult =
+            Result.success(
+                listOf(
+                    testPothole(id = "srv-1", serverId = "srv-1", status = "CONFIRMED", distinctReporterCount = 3),
+                    testPothole(id = "srv-2", serverId = "srv-2", status = "FIXED"),
+                    testPothole(id = "srv-3", serverId = "srv-3", status = null),
+                ),
             )
-        )
         repository.fixVoteResult = { Result.success(testPothole(id = it, serverId = it, status = "FIXED")) }
         setContent()
 

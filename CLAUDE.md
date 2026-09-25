@@ -14,7 +14,13 @@ o próprio CLAUDE.md). UI e textos do app em **pt-BR**.
 ./gradlew koverHtmlReportCoverage       # cobertura agregada -> build/reports/kover/htmlCoverage/index.html
 ./gradlew koverVerifyCoverage           # gate: falha abaixo de 90% de linhas / 75% de branches
 ./gradlew :feature:tracker:impl:testDebugUnitTest --tests "*HistoryScreenTest"   # um teste só
+./gradlew detekt spotlessApply sortDependencies   # estilo (mesmo gate do Kairos) — rodar antes de commitar
 ```
+
+Estilo: ktlint 1.2.1 via Spotless (`spotless.gradle`, regras no `.editorconfig`, 120 colunas), detekt com
+`config/detekt/detekt.yml` (máx. 11 funções top-level por arquivo: tela grande se divide por assunto, ex.
+`DebugDetailScreen.kt`) e `sortDependencies` ordenando `plugins {}`/`dependencies {}`. Corrija o código em vez
+de afrouxar essas configs. `.claude/` fica fora do Spotless (worktrees de outros branches).
 
 `secrets.properties` (gitignored) guarda `MAPS_API_KEY`; sem ele o build usa o placeholder de
 `local.defaults.properties` e o mapa fica sem tiles.

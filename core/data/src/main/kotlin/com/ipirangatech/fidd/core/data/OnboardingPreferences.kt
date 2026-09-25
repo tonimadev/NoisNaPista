@@ -15,21 +15,23 @@ import javax.inject.Singleton
  * "how it works" hint up until they do).
  */
 @Singleton
-class OnboardingPreferences @Inject constructor(
-    private val dataStore: DataStore<Preferences>
-) {
-    private val completedKey = booleanPreferencesKey("onboarding_completed")
-    private val detectionStartedKey = booleanPreferencesKey("detection_started_once")
+class OnboardingPreferences
+    @Inject
+    constructor(
+        private val dataStore: DataStore<Preferences>,
+    ) {
+        private val completedKey = booleanPreferencesKey("onboarding_completed")
+        private val detectionStartedKey = booleanPreferencesKey("detection_started_once")
 
-    val hasCompletedOnboarding: Flow<Boolean> = dataStore.data.map { it[completedKey] ?: false }
+        val hasCompletedOnboarding: Flow<Boolean> = dataStore.data.map { it[completedKey] ?: false }
 
-    suspend fun markCompleted() {
-        dataStore.edit { it[completedKey] = true }
+        suspend fun markCompleted() {
+            dataStore.edit { it[completedKey] = true }
+        }
+
+        val hasStartedDetection: Flow<Boolean> = dataStore.data.map { it[detectionStartedKey] ?: false }
+
+        suspend fun markDetectionStarted() {
+            dataStore.edit { it[detectionStartedKey] = true }
+        }
     }
-
-    val hasStartedDetection: Flow<Boolean> = dataStore.data.map { it[detectionStartedKey] ?: false }
-
-    suspend fun markDetectionStarted() {
-        dataStore.edit { it[detectionStartedKey] = true }
-    }
-}

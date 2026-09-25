@@ -1,5 +1,6 @@
 package com.ipirangatech.fidd.feature.onboarding
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,7 +26,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -46,7 +46,10 @@ import kotlinx.coroutines.launch
  * prompt on Home arrives already expected instead of reading as "this app wants to track me".
  */
 @Composable
-fun OnboardingScreen(onFinish: () -> Unit, modifier: Modifier = Modifier) {
+fun OnboardingScreen(
+    onFinish: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val pages = remember { onboardingPages() }
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val scope = rememberCoroutineScope()
@@ -54,11 +57,12 @@ fun OnboardingScreen(onFinish: () -> Unit, modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Scaffold(containerColor = MaterialTheme.colorScheme.background) { innerPadding ->
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 TextButton(onClick = onFinish, modifier = Modifier.align(Alignment.End)) {
                     Text(stringResource(R.string.onboarding_skip))
@@ -66,27 +70,32 @@ fun OnboardingScreen(onFinish: () -> Unit, modifier: Modifier = Modifier) {
 
                 HorizontalPager(
                     state = pagerState,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
                 ) { page ->
                     OnboardingPageContent(pages[page])
                 }
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(vertical = 16.dp)
+                    modifier = Modifier.padding(vertical = 16.dp),
                 ) {
                     pages.indices.forEach { index ->
                         val selected = pagerState.currentPage == index
                         Box(
-                            modifier = Modifier
-                                .size(if (selected) 10.dp else 8.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (selected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.surfaceVariant
-                                )
+                            modifier =
+                                Modifier
+                                    .size(if (selected) 10.dp else 8.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (selected) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.surfaceVariant
+                                        },
+                                    ),
                         )
                     }
                 }
@@ -100,7 +109,7 @@ fun OnboardingScreen(onFinish: () -> Unit, modifier: Modifier = Modifier) {
                             scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(if (isLastPage) R.string.onboarding_start else R.string.onboarding_next))
                 }
@@ -110,24 +119,28 @@ fun OnboardingScreen(onFinish: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun OnboardingPageContent(page: OnboardingPage, modifier: Modifier = Modifier) {
+private fun OnboardingPageContent(
+    page: OnboardingPage,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Box(
-            modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = page.icon,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
             )
         }
         Spacer(modifier = Modifier.height(32.dp))
@@ -135,14 +148,14 @@ private fun OnboardingPageContent(page: OnboardingPage, modifier: Modifier = Mod
             text = stringResource(page.titleRes),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = stringResource(page.descriptionRes),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -150,23 +163,24 @@ private fun OnboardingPageContent(page: OnboardingPage, modifier: Modifier = Mod
 private data class OnboardingPage(
     val icon: ImageVector,
     @StringRes val titleRes: Int,
-    @StringRes val descriptionRes: Int
+    @StringRes val descriptionRes: Int,
 )
 
-private fun onboardingPages() = listOf(
-    OnboardingPage(
-        icon = Icons.Rounded.Groups,
-        titleRes = R.string.onboarding_page1_title,
-        descriptionRes = R.string.onboarding_page1_description
-    ),
-    OnboardingPage(
-        icon = Icons.Rounded.TouchApp,
-        titleRes = R.string.onboarding_page2_title,
-        descriptionRes = R.string.onboarding_page2_description
-    ),
-    OnboardingPage(
-        icon = Icons.Rounded.VerifiedUser,
-        titleRes = R.string.onboarding_page3_title,
-        descriptionRes = R.string.onboarding_page3_description
+private fun onboardingPages() =
+    listOf(
+        OnboardingPage(
+            icon = Icons.Rounded.Groups,
+            titleRes = R.string.onboarding_page1_title,
+            descriptionRes = R.string.onboarding_page1_description,
+        ),
+        OnboardingPage(
+            icon = Icons.Rounded.TouchApp,
+            titleRes = R.string.onboarding_page2_title,
+            descriptionRes = R.string.onboarding_page2_description,
+        ),
+        OnboardingPage(
+            icon = Icons.Rounded.VerifiedUser,
+            titleRes = R.string.onboarding_page3_title,
+            descriptionRes = R.string.onboarding_page3_description,
+        ),
     )
-)

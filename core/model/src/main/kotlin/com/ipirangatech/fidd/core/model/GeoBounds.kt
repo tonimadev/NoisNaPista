@@ -5,5 +5,5 @@ data class GeoBounds(
     val minLatitude: Double,
     val minLongitude: Double,
     val maxLatitude: Double,
-    val maxLongitude: Double
+    val maxLongitude: Double,
 )

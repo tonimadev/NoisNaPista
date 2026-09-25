@@ -14,23 +14,28 @@ import javax.inject.Singleton
  * permission prompt every time; a fresh fix is only taken when the user asks to update it.
  */
 @Singleton
-class RankingLocationPreferences @Inject constructor(
-    private val dataStore: DataStore<Preferences>
-) {
-    private val latitudeKey = doublePreferencesKey("ranking_last_latitude")
-    private val longitudeKey = doublePreferencesKey("ranking_last_longitude")
+class RankingLocationPreferences
+    @Inject
+    constructor(
+        private val dataStore: DataStore<Preferences>,
+    ) {
+        private val latitudeKey = doublePreferencesKey("ranking_last_latitude")
+        private val longitudeKey = doublePreferencesKey("ranking_last_longitude")
 
-    suspend fun getLastLocation(): Pair<Double, Double>? {
-        val prefs = dataStore.data.first()
-        val lat = prefs[latitudeKey] ?: return null
-        val lon = prefs[longitudeKey] ?: return null
-        return lat to lon
-    }
+        suspend fun getLastLocation(): Pair<Double, Double>? {
+            val prefs = dataStore.data.first()
+            val lat = prefs[latitudeKey] ?: return null
+            val lon = prefs[longitudeKey] ?: return null
+            return lat to lon
+        }
 
-    suspend fun saveLastLocation(latitude: Double, longitude: Double) {
-        dataStore.edit {
-            it[latitudeKey] = latitude
-            it[longitudeKey] = longitude
+        suspend fun saveLastLocation(
+            latitude: Double,
+            longitude: Double,
+        ) {
+            dataStore.edit {
+                it[latitudeKey] = latitude
+                it[longitudeKey] = longitude
+            }
         }
     }
-}

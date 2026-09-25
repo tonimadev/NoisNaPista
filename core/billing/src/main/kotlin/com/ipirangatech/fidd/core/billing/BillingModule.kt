@@ -21,13 +21,15 @@ interface BillingModule {
     companion object {
         @Provides
         @Singleton
-        fun providePayWallManager(@ApplicationContext context: Context): PayWallManager =
+        fun providePayWallManager(
+            @ApplicationContext context: Context,
+        ): PayWallManager =
             PayWallManagerImpl(
                 context,
                 PayWallConfig(
                     inAppProductIds = setOf(RemoveAdsRepository.REMOVE_ADS_PRODUCT_ID),
-                    debugMode = BuildConfig.DEBUG
-                )
+                    debugMode = BuildConfig.DEBUG,
+                ),
             )
     }
 }

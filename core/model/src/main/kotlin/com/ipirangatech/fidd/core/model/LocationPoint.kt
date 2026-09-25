@@ -10,5 +10,5 @@ data class LocationPoint(
     val timestamp: Long,
     /** Ground speed in m/s reported by the location provider, or null when the provider didn't
      * supply one (e.g. a stale/degraded fix). Used to skip pothole detection while stationary. */
-    val speed: Float? = null
+    val speed: Float? = null,
 )

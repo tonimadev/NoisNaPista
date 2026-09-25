@@ -7,5 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.io.File
 
 /** A real file-backed Preferences DataStore in [directory] (use a JUnit TemporaryFolder). */
-fun testPreferencesDataStore(scope: CoroutineScope, directory: File): DataStore<Preferences> =
-    PreferenceDataStoreFactory.create(scope = scope) { File(directory, "test.preferences_pb") }
+fun testPreferencesDataStore(
+    scope: CoroutineScope,
+    directory: File,
+): DataStore<Preferences> = PreferenceDataStoreFactory.create(scope = scope) { File(directory, "test.preferences_pb") }

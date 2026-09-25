@@ -2,11 +2,11 @@ package com.ipirangatech.fidd.feature.tracker.impl
 
 import android.app.Application
 import android.content.Intent
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
@@ -31,35 +31,62 @@ import org.robolectric.shadows.ShadowToast
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h3000dp")
 class DebugScreenTest {
-
     @get:Rule
     val compose = createComposeRule()
 
     private val app: Application = ApplicationProvider.getApplicationContext()
     private val repository = FakePotholeRepository()
 
-    private fun str(id: Int, vararg args: Any) = app.getString(id, *args)
+    private fun str(
+        id: Int,
+        vararg args: Any,
+    ) = app.getString(id, *args)
 
-    private val window = SensorWindow(
-        potholeId = "a",
-        samples = listOf(
-            SensorWindowSample(-500, 0.5f, 0.2f, 9.8f),
-            SensorWindowSample(0, 1f, -2f, 24f),
-            SensorWindowSample(400, 0.1f, 0.3f, 8f)
+    private val window =
+        SensorWindow(
+            potholeId = "a",
+            samples =
+                listOf(
+                    SensorWindowSample(-500, 0.5f, 0.2f, 9.8f),
+                    SensorWindowSample(0, 1f, -2f, 24f),
+                    SensorWindowSample(400, 0.1f, 0.3f, 8f),
+                ),
         )
-    )
 
-    private val entries = listOf(
-        DetectionDebugEntry(
-            testPothole(id = "a", timestamp = 3_000, sessionId = "trip-2", serverId = "srv-a", status = "CONFIRMED", distinctReporterCount = 2),
-            window,
-            DetectionLabel.POTHOLE,
-            "buraco fundo"
-        ),
-        DetectionDebugEntry(testPothole(id = "b", timestamp = 2_000, sessionId = "trip-2"), null, DetectionLabel.UNLABELED, ""),
-        DetectionDebugEntry(testPothole(id = "c", timestamp = 1_000, sessionId = "trip-1"), null, DetectionLabel.PHONE_HANDLING, ""),
-        DetectionDebugEntry(testPothole(id = "d", timestamp = 500, sessionId = null), null, DetectionLabel.SPEED_BUMP, "")
-    )
+    private val entries =
+        listOf(
+            DetectionDebugEntry(
+                testPothole(
+                    id = "a",
+                    timestamp = 3_000,
+                    sessionId = "trip-2",
+                    serverId = "srv-a",
+                    status = "CONFIRMED",
+                    distinctReporterCount = 2,
+                ),
+                window,
+                DetectionLabel.POTHOLE,
+                "buraco fundo",
+            ),
+            DetectionDebugEntry(
+                testPothole(id = "b", timestamp = 2_000, sessionId = "trip-2"),
+                null,
+                DetectionLabel.UNLABELED,
+                "",
+            ),
+            DetectionDebugEntry(
+                testPothole(id = "c", timestamp = 1_000, sessionId = "trip-1"),
+                null,
+                DetectionLabel.PHONE_HANDLING,
+                "",
+            ),
+            DetectionDebugEntry(
+                testPothole(id = "d", timestamp = 500, sessionId = null),
+                null,
+                DetectionLabel.SPEED_BUMP,
+                "",
+            ),
+        )
 
     @Test
     fun `the list groups detections by trip and filters by label`() {
@@ -78,7 +105,9 @@ class DebugScreenTest {
         compose.onNodeWithText(speedBumpChip).performClick() // tapping the active filter clears it
         compose.onNodeWithText(str(R.string.debug_session_count_format, 2)).assertExists()
 
-        compose.onNodeWithText(str(R.string.debug_filter_label_format, DetectionLabel.ROUGH_ROAD.displayName, 0)).performClick()
+        compose.onNodeWithText(
+            str(R.string.debug_filter_label_format, DetectionLabel.ROUGH_ROAD.displayName, 0),
+        ).performClick()
         compose.onNodeWithText(str(R.string.debug_empty_category)).assertExists()
         compose.onNodeWithText(str(R.string.debug_filter_all_format, 4)).performClick()
 
@@ -104,7 +133,8 @@ class DebugScreenTest {
         val vm = DebugViewModel(repository)
         compose.setContent { DebugDetailScreen(viewModel = vm, potholeId = "a", onBack = { backPressed = true }) }
 
-        compose.onNodeWithText(str(R.string.debug_trip_number_format, 3)).assertExists() // oldest trip = 1: sessionless (500), trip-1, trip-2
+        // oldest trip = 1: sessionless (500), trip-1, trip-2
+        compose.onNodeWithText(str(R.string.debug_trip_number_format, 3)).assertExists()
         compose.onNodeWithText(str(R.string.debug_backend_status_format, "CONFIRMED", 2)).assertExists()
         compose.onNodeWithText(str(R.string.debug_severity_format, 24f)).assertExists()
         compose.onNodeWithText(str(R.string.debug_chart_time_min_format, -500)).assertExists()

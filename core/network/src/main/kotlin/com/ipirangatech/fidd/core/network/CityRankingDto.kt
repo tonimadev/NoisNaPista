@@ -11,7 +11,7 @@ data class CityRankingResponseDto(
     val totalPotholes: Long,
     val fixedPotholes: Long,
     val recurrenceCount: Long,
-    val rank: Int? = null
+    val rank: Int? = null,
 )
 
 /** Matches the backend's CityRankingListResponse — GET /api/v1/cities/ranking never returns the
@@ -20,5 +20,5 @@ data class CityRankingResponseDto(
 data class CityRankingListResponseDto(
     val totalCities: Int,
     val top: List<CityRankingResponseDto>,
-    val bottom: List<CityRankingResponseDto>
+    val bottom: List<CityRankingResponseDto>,
 )

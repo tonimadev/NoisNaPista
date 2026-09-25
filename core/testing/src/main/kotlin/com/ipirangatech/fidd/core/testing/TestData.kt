@@ -10,7 +10,7 @@ fun testLocation(
     longitude: Double = -46.6333,
     accuracy: Float = 5f,
     timestamp: Long = 1_700_000_000_000L,
-    speed: Float? = null
+    speed: Float? = null,
 ) = LocationPoint(latitude, longitude, accuracy, timestamp, speed)
 
 fun testPothole(
@@ -22,7 +22,7 @@ fun testPothole(
     status: String? = null,
     distinctReporterCount: Int = 1,
     sessionId: String? = null,
-    location: LocationPoint = testLocation(timestamp = timestamp)
+    location: LocationPoint = testLocation(timestamp = timestamp),
 ) = Pothole(
     id = id,
     location = location,
@@ -32,7 +32,7 @@ fun testPothole(
     serverId = serverId,
     status = status,
     distinctReporterCount = distinctReporterCount,
-    sessionId = sessionId
+    sessionId = sessionId,
 )
 
 fun testCityRanking(
@@ -42,5 +42,5 @@ fun testCityRanking(
     totalPotholes: Long = 10,
     fixedPotholes: Long = 2,
     recurrenceCount: Long = 1,
-    rank: Int? = 1
+    rank: Int? = 1,
 ) = CityRanking(ibgeCode, name, state, totalPotholes, fixedPotholes, recurrenceCount, rank)

@@ -10,7 +10,7 @@ internal enum class AdPlacement(val releaseUnitId: String) {
     HOME(BuildConfig.ADMOB_BANNER_HOME),
     MAP(BuildConfig.ADMOB_BANNER_MAP),
     HISTORY(BuildConfig.ADMOB_BANNER_HISTORY),
-    RANKING(BuildConfig.ADMOB_BANNER_RANKING)
+    RANKING(BuildConfig.ADMOB_BANNER_RANKING),
 }
 
 internal object AdUnits {
@@ -21,6 +21,8 @@ internal object AdUnits {
      * Em debug é sempre o de teste: ver/clicar anúncio real do próprio app conta como tráfego
      * inválido e pode suspender a conta AdMob. Em release vem do admob.properties.
      */
-    fun banner(placement: AdPlacement, debug: Boolean = BuildConfig.DEBUG): String =
-        if (debug) TEST_BANNER else placement.releaseUnitId
+    fun banner(
+        placement: AdPlacement,
+        debug: Boolean = BuildConfig.DEBUG,
+    ): String = if (debug) TEST_BANNER else placement.releaseUnitId
 }

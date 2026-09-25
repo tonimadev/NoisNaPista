@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.hilt)
     alias(libs.plugins.google.devtools.ksp)
+    alias(libs.plugins.hilt)
     alias(libs.plugins.kover)
 }
 
@@ -25,18 +25,18 @@ android {
 }
 
 dependencies {
+    implementation(libs.hilt.android)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.paywall.core)
     implementation(libs.paywall.play)
 
-    implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
-    testImplementation(project(":core:testing"))
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
+    testImplementation(project(":core:testing"))
 }
 
 kover {

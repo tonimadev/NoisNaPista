@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.hilt)
     alias(libs.plugins.google.devtools.ksp)
+    alias(libs.plugins.hilt)
     alias(libs.plugins.kover)
 }
 
@@ -22,20 +22,21 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:model"))
-    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.hilt.android)
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.play.services.location)
+    implementation(project(":core:model"))
+
     ksp(libs.hilt.compiler)
 
-    testImplementation(project(":core:testing"))
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.robolectric)
-    testImplementation(libs.mockk)
-    testImplementation(libs.turbine)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.turbine)
+    testImplementation(project(":core:testing"))
 }
 
 kover {

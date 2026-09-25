@@ -15,47 +15,56 @@ import org.junit.rules.TemporaryFolder
 import java.util.UUID
 
 class PreferencesTest {
-
     @get:Rule
     val tmp = TemporaryFolder()
 
     @Test
-    fun `onboarding milestones start false and stick once marked`() = runTest {
-        val prefs = OnboardingPreferences(testPreferencesDataStore(backgroundScope, tmp.root))
+    fun `onboarding milestones start false and stick once marked`() =
+        runTest {
+            val prefs = OnboardingPreferences(testPreferencesDataStore(backgroundScope, tmp.root))
 
-        prefs.hasCompletedOnboarding.test {
-            assertFalse(awaitItem())
-            prefs.markCompleted()
-            assertTrue(awaitItem())
+            prefs.hasCompletedOnboarding.test {
+                assertFalse(awaitItem())
+                prefs.markCompleted()
+                assertTrue(awaitItem())
+            }
+            assertFalse(prefs.hasStartedDetection.first())
+            prefs.markDetectionStarted()
+            assertTrue(prefs.hasStartedDetection.first())
         }
-        assertFalse(prefs.hasStartedDetection.first())
-        prefs.markDetectionStarted()
-        assertTrue(prefs.hasStartedDetection.first())
-    }
 
     @Test
-    fun `ranking location is null until saved, then round-trips`() = runTest {
-        val prefs = RankingLocationPreferences(testPreferencesDataStore(backgroundScope, tmp.root))
+    fun `ranking location is null until saved, then round-trips`() =
+        runTest {
+            val prefs = RankingLocationPreferences(testPreferencesDataStore(backgroundScope, tmp.root))
 
-        assertNull(prefs.getLastLocation())
-        prefs.saveLastLocation(-23.55, -46.63)
-        assertEquals(-23.55 to -46.63, prefs.getLastLocation())
-    }
-
-    @Test
-    fun `reporter token is a UUID created once and then persisted`() = runTest {
-        val store = testPreferencesDataStore(backgroundScope, tmp.root)
-        val first = ReporterIdentityProvider(store).getOrCreateToken()
-
-        assertEquals(first, ReporterIdentityProvider(store).getOrCreateToken())
-        assertEquals(first, UUID.fromString(first).toString())
-    }
+            assertNull(prefs.getLastLocation())
+            prefs.saveLastLocation(-23.55, -46.63)
+            assertEquals(-23.55 to -46.63, prefs.getLastLocation())
+        }
 
     @Test
-    fun `different installs get different reporter tokens`() = runTest {
-        val a = ReporterIdentityProvider(testPreferencesDataStore(backgroundScope, tmp.newFolder())).getOrCreateToken()
-        val b = ReporterIdentityProvider(testPreferencesDataStore(backgroundScope, tmp.newFolder())).getOrCreateToken()
+    fun `reporter token is a UUID created once and then persisted`() =
+        runTest {
+            val store = testPreferencesDataStore(backgroundScope, tmp.root)
+            val first = ReporterIdentityProvider(store).getOrCreateToken()
 
-        assertNotEquals(a, b)
-    }
+            assertEquals(first, ReporterIdentityProvider(store).getOrCreateToken())
+            assertEquals(first, UUID.fromString(first).toString())
+        }
+
+    @Test
+    fun `different installs get different reporter tokens`() =
+        runTest {
+            val a =
+                ReporterIdentityProvider(
+                    testPreferencesDataStore(backgroundScope, tmp.newFolder()),
+                ).getOrCreateToken()
+            val b =
+                ReporterIdentityProvider(
+                    testPreferencesDataStore(backgroundScope, tmp.newFolder()),
+                ).getOrCreateToken()
+
+            assertNotEquals(a, b)
+        }
 }

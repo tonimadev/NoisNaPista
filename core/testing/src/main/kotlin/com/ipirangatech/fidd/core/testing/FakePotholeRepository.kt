@@ -74,11 +74,17 @@ class FakePotholeRepository : PotholeRepository {
 
     override fun getDebugEntries(): Flow<List<DetectionDebugEntry>> = debugEntries
 
-    override suspend fun updateDetectionLabel(potholeId: String, label: DetectionLabel) {
+    override suspend fun updateDetectionLabel(
+        potholeId: String,
+        label: DetectionLabel,
+    ) {
         labelUpdates += potholeId to label
     }
 
-    override suspend fun updateDetectionNote(potholeId: String, note: String) {
+    override suspend fun updateDetectionNote(
+        potholeId: String,
+        note: String,
+    ) {
         noteUpdates += potholeId to note
     }
 }

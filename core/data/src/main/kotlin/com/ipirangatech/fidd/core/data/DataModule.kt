@@ -22,11 +22,13 @@ interface DataModule {
     companion object {
         @Provides
         @Singleton
-        fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
+        fun provideDatabase(
+            @ApplicationContext context: Context,
+        ): AppDatabase {
             return Room.databaseBuilder(
                 context,
                 AppDatabase::class.java,
-                "fidd.db"
+                "fidd.db",
             )
                 // Pre-release app, no shipped schema to preserve yet.
                 .fallbackToDestructiveMigration(true)

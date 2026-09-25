@@ -12,7 +12,6 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class MapThumbnailTest {
-
     private val app: Application = ApplicationProvider.getApplicationContext()
 
     @Test

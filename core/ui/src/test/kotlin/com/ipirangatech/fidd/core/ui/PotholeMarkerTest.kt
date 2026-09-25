@@ -12,7 +12,6 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 class PotholeMarkerTest {
-
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Test

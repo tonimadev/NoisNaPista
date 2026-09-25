@@ -12,7 +12,8 @@ enum class DetectionLabel(val displayName: String) {
     JOINT_OR_MANHOLE("Junta, trilho ou bueiro"),
     BRAKING_OR_MANEUVER("Frenagem / manobra"),
     PHONE_HANDLING("Manuseio do celular"),
-    FALSE_POSITIVE("Alarme falso / outro");
+    FALSE_POSITIVE("Alarme falso / outro"),
+    ;
 
     companion object {
         fun fromStorageValueOrDefault(value: String?): DetectionLabel =

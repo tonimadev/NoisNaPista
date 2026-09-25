@@ -9,5 +9,5 @@ data class RotationRateSample(
     val x: Float,
     val y: Float,
     val z: Float,
-    val timestampNanos: Long
+    val timestampNanos: Long,
 )

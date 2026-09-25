@@ -5,6 +5,8 @@ targetSdk = "37"
 minSdk = "24"
 java = "11"
 agp = "9.4.0"
+detekt = "1.23.8"
+spotless = "8.10.2"
 desugarJdkLibs = "2.1.5"
 coreKtx = "1.19.0"
 junit = "4.13.2"
@@ -140,4 +142,6 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 secrets-gradle-plugin = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 

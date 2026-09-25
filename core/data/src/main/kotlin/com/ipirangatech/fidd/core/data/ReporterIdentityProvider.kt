@@ -17,17 +17,19 @@ import javax.inject.Singleton
  * ownership and distinct-reporter corroboration counts.
  */
 @Singleton
-class ReporterIdentityProvider @Inject constructor(
-    private val dataStore: DataStore<Preferences>
-) {
-    private val reporterTokenKey = stringPreferencesKey("reporter_token")
+class ReporterIdentityProvider
+    @Inject
+    constructor(
+        private val dataStore: DataStore<Preferences>,
+    ) {
+        private val reporterTokenKey = stringPreferencesKey("reporter_token")
 
-    suspend fun getOrCreateToken(): String {
-        val existing = dataStore.data.first()[reporterTokenKey]
-        if (existing != null) return existing
+        suspend fun getOrCreateToken(): String {
+            val existing = dataStore.data.first()[reporterTokenKey]
+            if (existing != null) return existing
 
-        val newToken = UUID.randomUUID().toString()
-        dataStore.edit { it[reporterTokenKey] = newToken }
-        return newToken
+            val newToken = UUID.randomUUID().toString()
+            dataStore.edit { it[reporterTokenKey] = newToken }
+            return newToken
+        }
     }
-}

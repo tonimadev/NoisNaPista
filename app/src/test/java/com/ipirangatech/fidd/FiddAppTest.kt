@@ -6,7 +6,6 @@ import org.junit.Assert.assertSame
 import org.junit.Test
 
 class FiddAppTest {
-
     @Test
     fun `WorkManager is configured with the Hilt worker factory`() {
         // Without this, @HiltWorker SyncWorker can't be constructed (see the manifest comment).

@@ -19,5 +19,5 @@ data class Pothole(
     /** Groups this detection with every other one made during the same tracking run (from
      * StartTracking to StopTracking) — one UUID per PotholeDetector.startDetection() call. Null
      * for community-fetched potholes, which were never part of a local tracking session. */
-    val sessionId: String? = null
+    val sessionId: String? = null,
 )

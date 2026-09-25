@@ -19,7 +19,11 @@ class FakeCityRepository : CityRepository {
         return rankingResult(sortBy)
     }
 
-    override suspend fun fetchNearestCity(lat: Double, lon: Double, sortBy: CityRankingSortBy): Result<CityRanking> {
+    override suspend fun fetchNearestCity(
+        lat: Double,
+        lon: Double,
+        sortBy: CityRankingSortBy,
+    ): Result<CityRanking> {
         nearestRequests += Triple(lat, lon, sortBy)
         return nearestResult(lat, lon, sortBy)
     }

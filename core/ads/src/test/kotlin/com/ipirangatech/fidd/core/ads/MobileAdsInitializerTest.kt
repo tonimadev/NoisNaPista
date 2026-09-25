@@ -3,8 +3,8 @@ package com.ipirangatech.fidd.core.ads
 import android.content.Context
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertSame
 import org.junit.Test
 

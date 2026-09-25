@@ -2,8 +2,8 @@ package com.ipirangatech.fidd
 
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.compose.LocalActivity
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Row
@@ -36,12 +36,19 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowWidthSizeClass
-import dagger.hilt.android.AndroidEntryPoint
 import com.ipirangatech.fidd.ads.AdPlacement
 import com.ipirangatech.fidd.ads.AdUnits
 import com.ipirangatech.fidd.ads.AdsUiEffect
 import com.ipirangatech.fidd.ads.AdsViewModel
 import com.ipirangatech.fidd.core.ads.SponsoredBanner
+import com.ipirangatech.fidd.feature.map.bridge.MapNavKey
+import com.ipirangatech.fidd.feature.map.impl.MapScreen
+import com.ipirangatech.fidd.feature.map.impl.MapViewModel
+import com.ipirangatech.fidd.feature.onboarding.OnboardingScreen
+import com.ipirangatech.fidd.feature.onboarding.OnboardingViewModel
+import com.ipirangatech.fidd.feature.ranking.bridge.RankingNavKey
+import com.ipirangatech.fidd.feature.ranking.impl.RankingScreen
+import com.ipirangatech.fidd.feature.ranking.impl.RankingViewModel
 import com.ipirangatech.fidd.feature.tracker.bridge.DebugDetailNavKey
 import com.ipirangatech.fidd.feature.tracker.bridge.DebugNavKey
 import com.ipirangatech.fidd.feature.tracker.bridge.HistoryNavKey
@@ -52,15 +59,8 @@ import com.ipirangatech.fidd.feature.tracker.impl.DebugViewModel
 import com.ipirangatech.fidd.feature.tracker.impl.HistoryScreen
 import com.ipirangatech.fidd.feature.tracker.impl.HistoryViewModel
 import com.ipirangatech.fidd.feature.tracker.impl.TrackerScreen
-import com.ipirangatech.fidd.feature.map.bridge.MapNavKey
-import com.ipirangatech.fidd.feature.map.impl.MapScreen
-import com.ipirangatech.fidd.feature.map.impl.MapViewModel
-import com.ipirangatech.fidd.feature.onboarding.OnboardingScreen
-import com.ipirangatech.fidd.feature.onboarding.OnboardingViewModel
-import com.ipirangatech.fidd.feature.ranking.bridge.RankingNavKey
-import com.ipirangatech.fidd.feature.ranking.impl.RankingScreen
-import com.ipirangatech.fidd.feature.ranking.impl.RankingViewModel
 import com.ipirangatech.fidd.ui.theme.FiddTheme
+import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -71,10 +71,11 @@ class MainActivity : ComponentActivity() {
             FiddTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     val onboardingViewModel: OnboardingViewModel = hiltViewModel()
-                    val hasCompletedOnboarding by onboardingViewModel.hasCompletedOnboarding.collectAsStateWithLifecycle()
+                    val hasCompletedOnboarding by
+                        onboardingViewModel.hasCompletedOnboarding.collectAsStateWithLifecycle()
 
                     when (hasCompletedOnboarding) {
                         // Ainda lendo o DataStore — não renderiza nada por um frame em vez de
@@ -110,18 +111,19 @@ private fun MainContent() {
     }
     // Onboarding e Debug nunca recebem; as telas decidem onde encaixar (ver cada adBanner).
     // Um bloco de anúncios por tela (AdPlacement), para o AdMob separar a receita de cada uma.
-    val adBannerFor: ((AdPlacement) -> @Composable () -> Unit)? = if (showAds && activity != null) {
-        { placement ->
-            {
-                SponsoredBanner(
-                    adUnitId = AdUnits.banner(placement),
-                    onRemoveAds = { adsViewModel.onRemoveAdsClick(activity) }
-                )
+    val adBannerFor: ((AdPlacement) -> @Composable () -> Unit)? =
+        if (showAds && activity != null) {
+            { placement ->
+                {
+                    SponsoredBanner(
+                        adUnitId = AdUnits.banner(placement),
+                        onRemoveAds = { adsViewModel.onRemoveAdsClick(activity) },
+                    )
+                }
             }
+        } else {
+            null
         }
-    } else {
-        null
-    }
     // O NavDisplay guarda o conteúdo de cada NavEntry: uma lambda que capturasse `adBannerFor`
     // direto ficaria com o valor da primeira composição (banner nunca aparecia, ou não sumia
     // depois da compra). Lido por State, a entrada recompõe quando ele muda.
@@ -138,7 +140,7 @@ private fun MainContent() {
                         backStack.clear()
                         backStack.add(TrackerNavKey)
                     }
-                }
+                },
             )
             item(
                 icon = { Icon(Icons.Rounded.Map, contentDescription = stringResource(R.string.nav_map)) },
@@ -149,7 +151,7 @@ private fun MainContent() {
                         backStack.clear()
                         backStack.add(MapNavKey)
                     }
-                }
+                },
             )
             item(
                 icon = { Icon(Icons.Rounded.History, contentDescription = stringResource(R.string.nav_history)) },
@@ -160,7 +162,7 @@ private fun MainContent() {
                         backStack.clear()
                         backStack.add(HistoryNavKey)
                     }
-                }
+                },
             )
             item(
                 icon = { Icon(Icons.Rounded.Leaderboard, contentDescription = stringResource(R.string.nav_ranking)) },
@@ -171,7 +173,7 @@ private fun MainContent() {
                         backStack.clear()
                         backStack.add(RankingNavKey)
                     }
-                }
+                },
             )
             // Debug-only: a detailed per-detection view for classifying captured
             // sensor data (ML labeling). Must never appear in a release build.
@@ -185,10 +187,10 @@ private fun MainContent() {
                             backStack.clear()
                             backStack.add(DebugNavKey)
                         }
-                    }
+                    },
                 )
             }
-        }
+        },
     ) {
         if (isExpanded && currentKey is TrackerNavKey) {
             Row(modifier = Modifier.fillMaxSize()) {
@@ -202,72 +204,80 @@ private fun MainContent() {
                     // O mapa completo já aparece ao lado (MapScreen); sem isso, os dois painéis
                     // mostravam o mesmo mapa duplicado em tamanhos diferentes.
                     showEmbeddedMap = false,
-                    adBanner = adBannerFor?.invoke(AdPlacement.HOME)
+                    adBanner = adBannerFor?.invoke(AdPlacement.HOME),
                 )
                 // Sem banner aqui: o painel da esquerda já tem um, e dois lado a lado é poluição.
                 MapScreen(
                     viewModel = hiltViewModel<MapViewModel>(),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
             }
         } else {
             NavDisplay(
                 backStack = backStack,
                 onBack = { backStack.removeLastOrNull() },
-                entryDecorators = listOf(
-                    rememberSaveableStateHolderNavEntryDecorator(),
-                    rememberViewModelStoreNavEntryDecorator()
-                ),
+                entryDecorators =
+                    listOf(
+                        rememberSaveableStateHolderNavEntryDecorator(),
+                        rememberViewModelStoreNavEntryDecorator(),
+                    ),
                 entryProvider = { key: NavKey ->
                     when (key) {
-                        is TrackerNavKey -> NavEntry(key) {
-                            TrackerScreen(
-                                viewModel = hiltViewModel(),
-                                onNavigateToMap = {
-                                    backStack.clear()
-                                    backStack.add(MapNavKey)
-                                },
-                                adBanner = currentAdBannerFor?.invoke(AdPlacement.HOME)
-                            )
-                        }
-                        is MapNavKey -> NavEntry(key) {
-                            MapScreen(
-                                viewModel = hiltViewModel<MapViewModel>(),
-                                adBanner = currentAdBannerFor?.invoke(AdPlacement.MAP)
-                            )
-                        }
-                        is HistoryNavKey -> NavEntry(key) {
-                            HistoryScreen(
-                                viewModel = hiltViewModel<HistoryViewModel>(),
-                                adBanner = currentAdBannerFor?.invoke(AdPlacement.HISTORY)
-                            )
-                        }
-                        is RankingNavKey -> NavEntry(key) {
-                            RankingScreen(
-                                viewModel = hiltViewModel<RankingViewModel>(),
-                                adBanner = currentAdBannerFor?.invoke(AdPlacement.RANKING)
-                            )
-                        }
-                        is DebugNavKey -> NavEntry(key) {
-                            DebugListScreen(
-                                viewModel = hiltViewModel<DebugViewModel>(),
-                                onOpenDetail = { potholeId ->
-                                    backStack.add(DebugDetailNavKey(potholeId))
-                                }
-                            )
-                        }
-                        is DebugDetailNavKey -> NavEntry(key) {
-                            DebugDetailScreen(
-                                viewModel = hiltViewModel<DebugViewModel>(),
-                                potholeId = key.potholeId,
-                                onBack = { backStack.removeLastOrNull() }
-                            )
-                        }
-                        else -> NavEntry(key) {
-                            // Fallback
-                        }
+                        is TrackerNavKey ->
+                            NavEntry(key) {
+                                TrackerScreen(
+                                    viewModel = hiltViewModel(),
+                                    onNavigateToMap = {
+                                        backStack.clear()
+                                        backStack.add(MapNavKey)
+                                    },
+                                    adBanner = currentAdBannerFor?.invoke(AdPlacement.HOME),
+                                )
+                            }
+                        is MapNavKey ->
+                            NavEntry(key) {
+                                MapScreen(
+                                    viewModel = hiltViewModel<MapViewModel>(),
+                                    adBanner = currentAdBannerFor?.invoke(AdPlacement.MAP),
+                                )
+                            }
+                        is HistoryNavKey ->
+                            NavEntry(key) {
+                                HistoryScreen(
+                                    viewModel = hiltViewModel<HistoryViewModel>(),
+                                    adBanner = currentAdBannerFor?.invoke(AdPlacement.HISTORY),
+                                )
+                            }
+                        is RankingNavKey ->
+                            NavEntry(key) {
+                                RankingScreen(
+                                    viewModel = hiltViewModel<RankingViewModel>(),
+                                    adBanner = currentAdBannerFor?.invoke(AdPlacement.RANKING),
+                                )
+                            }
+                        is DebugNavKey ->
+                            NavEntry(key) {
+                                DebugListScreen(
+                                    viewModel = hiltViewModel<DebugViewModel>(),
+                                    onOpenDetail = { potholeId ->
+                                        backStack.add(DebugDetailNavKey(potholeId))
+                                    },
+                                )
+                            }
+                        is DebugDetailNavKey ->
+                            NavEntry(key) {
+                                DebugDetailScreen(
+                                    viewModel = hiltViewModel<DebugViewModel>(),
+                                    potholeId = key.potholeId,
+                                    onBack = { backStack.removeLastOrNull() },
+                                )
+                            }
+                        else ->
+                            NavEntry(key) {
+                                // Fallback
+                            }
                     }
-                }
+                },
             )
         }
     }

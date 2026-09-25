@@ -1,25 +1,24 @@
 package com.ipirangatech.fidd.feature.map.impl
 
+import android.app.Application
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.test.onNodeWithTag
-import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.ipirangatech.fidd.core.sensor.tracking.PotholeDetector
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakeMotionSensor
 import com.ipirangatech.fidd.core.testing.FakePotholeRepository
 import com.ipirangatech.fidd.core.testing.testLocation
 import com.ipirangatech.fidd.core.testing.testPothole
-import com.google.android.gms.maps.CameraUpdateFactory
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -38,7 +37,6 @@ import org.robolectric.RobolectricTestRunner
  */
 @RunWith(RobolectricTestRunner::class)
 class MapScreenTest {
-
     @get:Rule
     val compose = createComposeRule()
 
@@ -79,7 +77,10 @@ class MapScreenTest {
         setContent(adBanner = { Box(Modifier.testTag("ad").fillMaxWidth().height(50.dp)) })
 
         val ad = compose.onNodeWithTag("ad").fetchSemanticsNode().boundsInRoot
-        val fab = compose.onNodeWithContentDescription(app.getString(R.string.map_recenter_cd)).fetchSemanticsNode().boundsInRoot
+        val fab =
+            compose.onNodeWithContentDescription(
+                app.getString(R.string.map_recenter_cd),
+            ).fetchSemanticsNode().boundsInRoot
         org.junit.Assert.assertTrue(ad.bottom < fab.top)
     }
 
@@ -103,9 +104,13 @@ class MapScreenTest {
         every { CameraUpdateFactory.newLatLngZoom(any(), any()) } returns mockk()
         location.currentLocation = testLocation()
         repository.potholes.value = listOf(testPothole(id = "a", serverId = "srv-a", severity = 25f))
-        repository.communityResult = Result.success(
-            listOf(testPothole(id = "srv-a", serverId = "srv-a"), testPothole(id = "srv-b", serverId = "srv-b", status = null))
-        )
+        repository.communityResult =
+            Result.success(
+                listOf(
+                    testPothole(id = "srv-a", serverId = "srv-a"),
+                    testPothole(id = "srv-b", serverId = "srv-b", status = null),
+                ),
+            )
         val vm = setContent()
         vm.onViewportChanged(com.ipirangatech.fidd.core.model.GeoBounds(-24.0, -47.0, -23.0, -46.0))
 

@@ -1,26 +1,25 @@
 package com.ipirangatech.fidd.feature.ranking.impl
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.assertIsNotDisplayed
-import org.junit.Assert.assertTrue
 import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import com.ipirangatech.fidd.core.data.RankingLocationPreferences
 import com.ipirangatech.fidd.core.model.CityRankingList
@@ -38,6 +37,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -50,7 +50,6 @@ import org.robolectric.shadows.ShadowToast
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w411dp-h3000dp")
 class RankingScreenTest {
-
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
 
@@ -63,28 +62,37 @@ class RankingScreenTest {
     private val dataStoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val preferences by lazy { RankingLocationPreferences(testPreferencesDataStore(dataStoreScope, tmp.root)) }
 
-    private val saoPaulo = testCityRanking(ibgeCode = 1, name = "São Paulo", totalPotholes = 40, fixedPotholes = 5, rank = 1)
-    private val campinas = testCityRanking(ibgeCode = 2, name = "Campinas", totalPotholes = 20, fixedPotholes = 9, rank = 2)
+    private val saoPaulo =
+        testCityRanking(ibgeCode = 1, name = "São Paulo", totalPotholes = 40, fixedPotholes = 5, rank = 1)
+    private val campinas =
+        testCityRanking(ibgeCode = 2, name = "Campinas", totalPotholes = 20, fixedPotholes = 9, rank = 2)
     private val santos = testCityRanking(ibgeCode = 3, name = "Santos", totalPotholes = 1, fixedPotholes = 0, rank = 3)
     private val list = CityRankingList(totalCities = 3, top = listOf(saoPaulo, campinas), bottom = listOf(santos))
 
     @After
     fun tearDown() = dataStoreScope.cancel()
 
-    private fun str(id: Int, vararg args: Any) = app.getString(id, *args)
+    private fun str(
+        id: Int,
+        vararg args: Any,
+    ) = app.getString(id, *args)
 
-    private fun waitForText(text: String) = compose.waitUntil(3_000) {
-        compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
-    }
+    private fun waitForText(text: String) =
+        compose.waitUntil(3_000) {
+            compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
+        }
 
     private fun setContent(
         dark: Boolean = false,
-        adBanner: (@androidx.compose.runtime.Composable () -> Unit)? = null
+        adBanner: (@androidx.compose.runtime.Composable () -> Unit)? = null,
     ): RankingViewModel {
         val vm = RankingViewModel(cities, location, preferences)
         compose.setContent {
-            if (dark) MaterialTheme(colorScheme = darkColorScheme()) { RankingScreen(viewModel = vm, adBanner = adBanner) }
-            else RankingScreen(viewModel = vm, adBanner = adBanner)
+            if (dark) {
+                MaterialTheme(colorScheme = darkColorScheme()) { RankingScreen(viewModel = vm, adBanner = adBanner) }
+            } else {
+                RankingScreen(viewModel = vm, adBanner = adBanner)
+            }
         }
         return vm
     }
@@ -95,8 +103,12 @@ class RankingScreenTest {
         setContent()
 
         compose.onNodeWithText(app.resources.getQuantityString(R.plurals.ranking_subtitle_format, 3, 3)).assertExists()
-        compose.onNodeWithText(str(R.string.ranking_top_header_format, str(R.string.ranking_metric_potholes_lower))).assertExists()
-        compose.onNodeWithText(str(R.string.ranking_bottom_header_format, str(R.string.ranking_metric_potholes_lower))).assertExists()
+        compose.onNodeWithText(
+            str(R.string.ranking_top_header_format, str(R.string.ranking_metric_potholes_lower)),
+        ).assertExists()
+        compose.onNodeWithText(
+            str(R.string.ranking_bottom_header_format, str(R.string.ranking_metric_potholes_lower)),
+        ).assertExists()
         compose.onNodeWithText("Campinas").assertExists()
         compose.onNodeWithText(str(R.string.ranking_my_city_prompt)).assertExists()
 
@@ -113,7 +125,9 @@ class RankingScreenTest {
         compose.onNodeWithText(str(R.string.ranking_metric_recurrence)).performClick()
 
         waitForText(str(R.string.ranking_top_header_format, str(R.string.ranking_metric_recurrence_lower)))
-        compose.onNodeWithText(str(R.string.ranking_bottom_header_format, str(R.string.ranking_metric_recurrence_lower))).assertDoesNotExist()
+        compose.onNodeWithText(
+            str(R.string.ranking_bottom_header_format, str(R.string.ranking_metric_recurrence_lower)),
+        ).assertDoesNotExist()
     }
 
     @Test
@@ -123,9 +137,10 @@ class RankingScreenTest {
 
         val ad = compose.onNodeWithTag("ad").fetchSemanticsNode().boundsInRoot
         val topRow = compose.onNodeWithText("Campinas").fetchSemanticsNode().boundsInRoot
-        val bottomHeader = compose.onNodeWithText(
-            str(R.string.ranking_bottom_header_format, str(R.string.ranking_metric_potholes_lower))
-        ).fetchSemanticsNode().boundsInRoot
+        val bottomHeader =
+            compose.onNodeWithText(
+                str(R.string.ranking_bottom_header_format, str(R.string.ranking_metric_potholes_lower)),
+            ).fetchSemanticsNode().boundsInRoot
         assertTrue(topRow.bottom <= ad.top && ad.bottom <= bottomHeader.top)
     }
 
@@ -148,7 +163,7 @@ class RankingScreenTest {
         compose.waitForIdle()
 
         compose.onNodeWithText(
-            str(R.string.ranking_bottom_header_format, str(R.string.ranking_metric_potholes_lower))
+            str(R.string.ranking_bottom_header_format, str(R.string.ranking_metric_potholes_lower)),
         ).assertIsNotDisplayed()
         compose.onNodeWithTag("ad").assertIsNotDisplayed()
     }
@@ -197,7 +212,11 @@ class RankingScreenTest {
         assertEquals(Manifest.permission.ACCESS_FINE_LOCATION, request.requestedPermissions.single())
         shadowOf(app).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
         @Suppress("DEPRECATION")
-        compose.activity.onRequestPermissionsResult(request.requestCode, request.requestedPermissions, intArrayOf(PackageManager.PERMISSION_GRANTED))
+        compose.activity.onRequestPermissionsResult(
+            request.requestCode,
+            request.requestedPermissions,
+            intArrayOf(PackageManager.PERMISSION_GRANTED),
+        )
 
         waitForText(app.resources.getQuantityString(R.plurals.ranking_of_total_format, 3, 3))
         compose.onNodeWithText("SP · ${str(R.string.ranking_your_city_tag)}").assertExists()
@@ -236,7 +255,9 @@ class RankingScreenTest {
 
         waitForText(str(R.string.ranking_unranked))
         compose.onNodeWithText(str(R.string.ranking_no_potholes_metric)).assertExists()
-        compose.onAllNodesWithText(str(R.string.ranking_view_in_list_button)).fetchSemanticsNodes().let { assertEquals(0, it.size) }
+        compose.onAllNodesWithText(str(R.string.ranking_view_in_list_button)).fetchSemanticsNodes().let {
+            assertEquals(0, it.size)
+        }
     }
 
     @Test

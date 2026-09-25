@@ -18,3 +18,6 @@ ml/data/raw_export.json
 
 # Agent-internal scratch plan, not meant to be tracked (see .agent/.aiexclude).
 .agent/plan.md
+
+# Release bundles/APKs gerados localmente para a Play Store.
+/app/release/

@@ -17,5 +17,5 @@ data class SensorWindowEntity(
     /** Stores a [com.ipirangatech.fidd.core.model.DetectionLabel] name, assigned manually
      * from the debug/labeling screen. Defaults to "UNLABELED" for every existing/new capture. */
     val label: String = "UNLABELED",
-    val note: String = ""
+    val note: String = "",
 )

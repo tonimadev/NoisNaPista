@@ -1,23 +1,23 @@
 package com.ipirangatech.fidd.feature.tracker.impl
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.test.onNodeWithTag
 import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import com.ipirangatech.fidd.core.data.OnboardingPreferences
 import com.ipirangatech.fidd.core.model.AccelerationSample
@@ -26,10 +26,10 @@ import com.ipirangatech.fidd.core.sensor.tracking.TrackingService
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakeMotionSensor
 import com.ipirangatech.fidd.core.testing.FakePotholeRepository
+import com.ipirangatech.fidd.core.testing.awaitFirst
 import com.ipirangatech.fidd.core.testing.testLocation
 import com.ipirangatech.fidd.core.testing.testPothole
 import com.ipirangatech.fidd.core.testing.testPreferencesDataStore
-import com.ipirangatech.fidd.core.testing.awaitFirst
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -52,7 +52,6 @@ import org.robolectric.shadows.ShadowToast
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h3000dp")
 class TrackerScreenTest {
-
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
 
@@ -73,24 +72,34 @@ class TrackerScreenTest {
         dataStoreScope.cancel()
     }
 
-    private fun str(id: Int, vararg args: Any) = app.getString(id, *args)
+    private fun str(
+        id: Int,
+        vararg args: Any,
+    ) = app.getString(id, *args)
 
     private fun grant(vararg permissions: String) = shadowOf(app).grantPermissions(*permissions)
 
     private fun setContent(
         showEmbeddedMap: Boolean = false,
         startedBefore: Boolean = true,
-        adBanner: (@androidx.compose.runtime.Composable () -> Unit)? = null
+        adBanner: (@androidx.compose.runtime.Composable () -> Unit)? = null,
     ) {
         val preferences = OnboardingPreferences(testPreferencesDataStore(dataStoreScope, tmp.root))
         if (startedBefore) runBlocking { preferences.markDetectionStarted() }
         viewModel = TrackerViewModel(app, detector, location, repository, preferences)
-        compose.setContent { TrackerScreen(viewModel = viewModel, showEmbeddedMap = showEmbeddedMap, adBanner = adBanner) }
+        compose.setContent {
+            TrackerScreen(
+                viewModel = viewModel,
+                showEmbeddedMap = showEmbeddedMap,
+                adBanner = adBanner,
+            )
+        }
     }
 
-    private fun waitForText(text: String) = compose.waitUntil(3_000) {
-        compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
-    }
+    private fun waitForText(text: String) =
+        compose.waitUntil(3_000) {
+            compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
+        }
 
     /** Answers the pending runtime-permission request as the system dialog would. */
     @Suppress("DEPRECATION") // the Activity Result API delivers permission results through this callback
@@ -100,7 +109,9 @@ class TrackerScreenTest {
         compose.activity.onRequestPermissionsResult(
             request.requestCode,
             request.requestedPermissions,
-            granted.map { if (it) PackageManager.PERMISSION_GRANTED else PackageManager.PERMISSION_DENIED }.toIntArray()
+            granted
+                .map { if (it) PackageManager.PERMISSION_GRANTED else PackageManager.PERMISSION_DENIED }
+                .toIntArray(),
         )
         compose.waitForIdle()
     }
@@ -148,7 +159,10 @@ class TrackerScreenTest {
         compose.onNodeWithText(str(R.string.tracker_start_button)).performClick()
         compose.onNodeWithText(str(R.string.tracker_permission_rationale_confirm)).performClick()
         answerPermissionRequest(true, true) // fine + coarse
-        assertEquals(Manifest.permission.POST_NOTIFICATIONS, shadowOf(compose.activity).lastRequestedPermission.requestedPermissions.single())
+        assertEquals(
+            Manifest.permission.POST_NOTIFICATIONS,
+            shadowOf(compose.activity).lastRequestedPermission.requestedPermissions.single(),
+        )
         answerPermissionRequest(false) // notifications are optional
 
         assertEquals(TrackingService::class.java.name, startedService())
@@ -163,12 +177,14 @@ class TrackerScreenTest {
         answerPermissionRequest(false, true)
 
         compose.onNodeWithText(str(R.string.tracker_permission_precise_title)).assertExists()
-        shadowOf(app.packageManager).setShouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION, true)
+        shadowOf(
+            app.packageManager,
+        ).setShouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION, true)
         compose.onNodeWithText(str(R.string.tracker_permission_precise_confirm)).performClick()
         compose.waitForIdle()
         assertEquals(
             listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-            shadowOf(compose.activity).lastRequestedPermission.requestedPermissions.toList()
+            shadowOf(compose.activity).lastRequestedPermission.requestedPermissions.toList(),
         )
     }
 
@@ -214,7 +230,11 @@ class TrackerScreenTest {
 
     @Test
     fun `with every permission granted start goes straight to the service`() {
-        grant(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.POST_NOTIFICATIONS)
+        grant(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.POST_NOTIFICATIONS,
+        )
         location.currentLocation = testLocation()
         setContent()
 
@@ -239,14 +259,17 @@ class TrackerScreenTest {
 
     @Test
     fun `recent detections are counted and labelled by severity band`() {
-        repository.potholes.value = listOf(
-            testPothole(id = "strong", severity = 30f),
-            testPothole(id = "medium", severity = 15f),
-            testPothole(id = "light", severity = 8f)
-        )
+        repository.potholes.value =
+            listOf(
+                testPothole(id = "strong", severity = 30f),
+                testPothole(id = "medium", severity = 15f),
+                testPothole(id = "light", severity = 8f),
+            )
         setContent()
 
-        compose.onNodeWithText(app.resources.getQuantityString(R.plurals.tracker_pothole_count_format, 3, 3)).assertExists()
+        compose.onNodeWithText(
+            app.resources.getQuantityString(R.plurals.tracker_pothole_count_format, 3, 3),
+        ).assertExists()
         compose.onNodeWithText(str(R.string.tracker_severity_high)).assertExists()
         compose.onNodeWithText(str(R.string.tracker_severity_medium)).assertExists()
         compose.onNodeWithText(str(R.string.tracker_severity_low)).assertExists()

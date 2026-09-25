@@ -2,10 +2,10 @@ package com.ipirangatech.fidd.feature.tracker.impl
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import com.ipirangatech.fidd.core.data.PotholeRepository
 import com.ipirangatech.fidd.core.model.DetectionDebugEntry
 import com.ipirangatech.fidd.core.model.DetectionLabel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -19,22 +19,30 @@ import javax.inject.Inject
  * simply looks its target up by id from the same repository-backed flow.
  */
 @HiltViewModel
-class DebugViewModel @Inject constructor(
-    private val repository: PotholeRepository
-) : ViewModel() {
+class DebugViewModel
+    @Inject
+    constructor(
+        private val repository: PotholeRepository,
+    ) : ViewModel() {
+        val entries: StateFlow<List<DetectionDebugEntry>> =
+            repository.getDebugEntries()
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5000),
+                    initialValue = emptyList(),
+                )
 
-    val entries: StateFlow<List<DetectionDebugEntry>> = repository.getDebugEntries()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+        fun updateLabel(
+            potholeId: String,
+            label: DetectionLabel,
+        ) {
+            viewModelScope.launch { repository.updateDetectionLabel(potholeId, label) }
+        }
 
-    fun updateLabel(potholeId: String, label: DetectionLabel) {
-        viewModelScope.launch { repository.updateDetectionLabel(potholeId, label) }
+        fun updateNote(
+            potholeId: String,
+            note: String,
+        ) {
+            viewModelScope.launch { repository.updateDetectionNote(potholeId, note) }
+        }
     }
-
-    fun updateNote(potholeId: String, note: String) {
-        viewModelScope.launch { repository.updateDetectionNote(potholeId, note) }
-    }
-}

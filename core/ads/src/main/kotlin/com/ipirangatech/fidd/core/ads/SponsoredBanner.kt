@@ -36,20 +36,20 @@ fun SponsoredBanner(
     adUnitId: String,
     onRemoveAds: () -> Unit,
     modifier: Modifier = Modifier,
-    ad: @Composable (Modifier) -> Unit = { AdMobBanner(adUnitId, it) }
+    ad: @Composable (Modifier) -> Unit = { AdMobBanner(adUnitId, it) },
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         ad(Modifier.fillMaxWidth())
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = stringResource(R.string.ads_invite),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
             TextButton(onClick = onRemoveAds) {
                 Text(stringResource(R.string.ads_remove_button))
@@ -60,7 +60,10 @@ fun SponsoredBanner(
 
 /** Banner adaptativo ancorado, com a largura que o slot tiver (lista com margem, painel dividido). */
 @Composable
-fun AdMobBanner(adUnitId: String, modifier: Modifier = Modifier) {
+fun AdMobBanner(
+    adUnitId: String,
+    modifier: Modifier = Modifier,
+) {
     val isPreview = LocalInspectionMode.current
     val context = LocalContext.current
     BoxWithConstraints(modifier = modifier.wrapContentHeight()) {
@@ -77,13 +80,13 @@ fun AdMobBanner(adUnitId: String, modifier: Modifier = Modifier) {
                     if (!isPreview) loadAd(AdRequest.Builder().build())
                 }
             },
-            onRelease = { it.destroy() }
+            onRelease = { it.destroy() },
         )
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun SponsoredBannerPreview() {
+internal fun SponsoredBannerPreview() {
     SponsoredBanner(adUnitId = "ca-app-pub-3940256099942544/9214589741", onRemoveAds = {})
 }

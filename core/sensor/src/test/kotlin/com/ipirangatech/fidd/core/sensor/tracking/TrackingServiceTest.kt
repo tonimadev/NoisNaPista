@@ -36,7 +36,6 @@ import javax.inject.Inject
 @Config(application = HiltTestApplication::class)
 @RunWith(RobolectricTestRunner::class)
 class TrackingServiceTest {
-
     @get:Rule
     val hiltRule = HiltAndroidRule(this)
 
@@ -65,7 +64,10 @@ class TrackingServiceTest {
         assertEquals(context.getString(R.string.tracking_notification_title), shadowOf(notification).contentTitle)
         assertEquals(1, notification.actions.size)
         assertTrue(detector.isTracking.value)
-        val channel = context.getSystemService(NotificationManager::class.java).getNotificationChannel("tracking_channel")
+        val channel =
+            context.getSystemService(
+                NotificationManager::class.java,
+            ).getNotificationChannel("tracking_channel")
         assertEquals(NotificationManager.IMPORTANCE_LOW, channel.importance)
     }
 

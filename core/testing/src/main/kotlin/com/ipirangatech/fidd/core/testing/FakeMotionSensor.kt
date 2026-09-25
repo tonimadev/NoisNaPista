@@ -13,6 +13,8 @@ class FakeMotionSensor : MotionSensor {
     val rotation = MutableSharedFlow<RotationRateSample>(replay = 1)
 
     override fun getAccelerationUpdates(): Flow<AccelerationSample> = acceleration
+
     override fun getGravityUpdates(): Flow<AccelerationSample> = gravity
+
     override fun getRotationRateUpdates(): Flow<RotationRateSample> = rotation
 }

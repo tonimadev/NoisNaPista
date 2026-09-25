@@ -17,7 +17,7 @@ interface PotholeService {
     @POST("api/v1/potholes")
     suspend fun submitReading(
         @Header(REPORTER_TOKEN_HEADER) reporterToken: String,
-        @Body request: PotholeReadingRequestDto
+        @Body request: PotholeReadingRequestDto,
     ): PotholeResponseDto
 
     /** Up to [PotholeReadingBatchRequestDto.MAX_SIZE] readings in one round trip; one result per
@@ -25,7 +25,7 @@ interface PotholeService {
     @POST("api/v1/potholes/batch")
     suspend fun submitReadings(
         @Header(REPORTER_TOKEN_HEADER) reporterToken: String,
-        @Body request: PotholeReadingBatchRequestDto
+        @Body request: PotholeReadingBatchRequestDto,
     ): List<PotholeBatchItemResponseDto>
 
     /** Map viewport query. The server caps the result (most-corroborated first) — [limit] can
@@ -36,7 +36,7 @@ interface PotholeService {
         @Query("minLon") minLon: Double,
         @Query("maxLat") maxLat: Double,
         @Query("maxLon") maxLon: Double,
-        @Query("limit") limit: Int? = null
+        @Query("limit") limit: Int? = null,
     ): List<PotholeResponseDto>
 
     /** Potholes around a point, nearest first — for list screens rather than the map. */
@@ -45,18 +45,18 @@ interface PotholeService {
         @Query("lat") latitude: Double,
         @Query("lon") longitude: Double,
         @Query("radiusMeters") radiusMeters: Double? = null,
-        @Query("limit") limit: Int? = null
+        @Query("limit") limit: Int? = null,
     ): List<PotholeResponseDto>
 
     @POST("api/v1/potholes/{id}/fix-votes")
     suspend fun castFixVote(
         @Path("id") id: String,
-        @Header(REPORTER_TOKEN_HEADER) reporterToken: String
+        @Header(REPORTER_TOKEN_HEADER) reporterToken: String,
     ): PotholeResponseDto
 
     @DELETE("api/v1/potholes/{id}")
     suspend fun deletePothole(
         @Path("id") id: String,
-        @Header(REPORTER_TOKEN_HEADER) reporterToken: String
+        @Header(REPORTER_TOKEN_HEADER) reporterToken: String,
     )
 }

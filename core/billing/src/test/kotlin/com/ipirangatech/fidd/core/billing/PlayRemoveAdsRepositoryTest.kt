@@ -25,15 +25,16 @@ class PlayRemoveAdsRepositoryTest {
     private val activity: Activity = mockk()
 
     @Test
-    fun `ownership is unknown until the store answers`() = runTest(mainDispatcherRule.testDispatcher) {
-        val repository = PlayRemoveAdsRepository(payWall)
-        runCurrent()
-        assertNull(repository.adsRemoved.value)
+    fun `ownership is unknown until the store answers`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val repository = PlayRemoveAdsRepository(payWall)
+            runCurrent()
+            assertNull(repository.adsRemoved.value)
 
-        payWall.isReady.value = true
-        runCurrent()
-        assertEquals(false, repository.adsRemoved.value)
-    }
+            payWall.isReady.value = true
+            runCurrent()
+            assertEquals(false, repository.adsRemoved.value)
+        }
 
     @Test
     fun `a store that never answers is treated as not owned after the grace period`() =
@@ -54,24 +55,26 @@ class PlayRemoveAdsRepositoryTest {
         }
 
     @Test
-    fun `owning remove_ads_premium removes ads`() = runTest(mainDispatcherRule.testDispatcher) {
-        val repository = PlayRemoveAdsRepository(payWall)
-        payWall.isReady.value = true
-        runCurrent()
-        assertEquals(false, repository.adsRemoved.value)
+    fun `owning remove_ads_premium removes ads`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val repository = PlayRemoveAdsRepository(payWall)
+            payWall.isReady.value = true
+            runCurrent()
+            assertEquals(false, repository.adsRemoved.value)
 
-        payWall.ownedProductIds.value = setOf(REMOVE_ADS_PRODUCT_ID)
-        runCurrent()
+            payWall.ownedProductIds.value = setOf(REMOVE_ADS_PRODUCT_ID)
+            runCurrent()
 
-        assertEquals(true, repository.adsRemoved.value)
-    }
+            assertEquals(true, repository.adsRemoved.value)
+        }
 
     @Test
-    fun `already owned product is reflected before the first collection`() = runTest(mainDispatcherRule.testDispatcher) {
-        payWall.ownedProductIds.value = setOf(REMOVE_ADS_PRODUCT_ID)
+    fun `already owned product is reflected before the first collection`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            payWall.ownedProductIds.value = setOf(REMOVE_ADS_PRODUCT_ID)
 
-        assertEquals(true, PlayRemoveAdsRepository(payWall).adsRemoved.value)
-    }
+            assertEquals(true, PlayRemoveAdsRepository(payWall).adsRemoved.value)
+        }
 
     @Test
     fun `other products do not remove ads and losing ownership brings them back`() =
@@ -96,38 +99,41 @@ class PlayRemoveAdsRepositoryTest {
     }
 
     @Test
-    fun `purchase when ready launches the flow right away`() = runTest(mainDispatcherRule.testDispatcher) {
-        payWall.isReady.value = true
+    fun `purchase when ready launches the flow right away`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            payWall.isReady.value = true
 
-        PlayRemoveAdsRepository(payWall).purchase(activity)
+            PlayRemoveAdsRepository(payWall).purchase(activity)
 
-        assertEquals(listOf(REMOVE_ADS_PRODUCT_ID), payWall.purchases)
-        assertEquals(0, payWall.connectCalls)
-    }
-
-    @Test
-    fun `purchase before ready reconnects and launches once ready`() = runTest(mainDispatcherRule.testDispatcher) {
-        val repository = PlayRemoveAdsRepository(payWall)
-
-        repository.purchase(activity)
-        runCurrent()
-        assertEquals(1, payWall.connectCalls)
-        assertTrue(payWall.purchases.isEmpty())
-
-        payWall.isReady.value = true
-        runCurrent()
-        assertEquals(listOf(REMOVE_ADS_PRODUCT_ID), payWall.purchases)
-    }
-
-    @Test
-    fun `purchase reports a failure when the store never becomes ready`() = runTest(mainDispatcherRule.testDispatcher) {
-        val repository = PlayRemoveAdsRepository(payWall)
-
-        repository.purchaseFailures.test {
-            repository.purchase(activity)
-            advanceTimeBy(15_001)
-            awaitItem()
+            assertEquals(listOf(REMOVE_ADS_PRODUCT_ID), payWall.purchases)
+            assertEquals(0, payWall.connectCalls)
         }
-        assertTrue(payWall.purchases.isEmpty())
-    }
+
+    @Test
+    fun `purchase before ready reconnects and launches once ready`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val repository = PlayRemoveAdsRepository(payWall)
+
+            repository.purchase(activity)
+            runCurrent()
+            assertEquals(1, payWall.connectCalls)
+            assertTrue(payWall.purchases.isEmpty())
+
+            payWall.isReady.value = true
+            runCurrent()
+            assertEquals(listOf(REMOVE_ADS_PRODUCT_ID), payWall.purchases)
+        }
+
+    @Test
+    fun `purchase reports a failure when the store never becomes ready`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val repository = PlayRemoveAdsRepository(payWall)
+
+            repository.purchaseFailures.test {
+                repository.purchase(activity)
+                advanceTimeBy(15_001)
+                awaitItem()
+            }
+            assertTrue(payWall.purchases.isEmpty())
+        }
 }

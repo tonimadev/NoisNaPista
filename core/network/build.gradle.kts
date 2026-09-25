@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.hilt)
     alias(libs.plugins.google.devtools.ksp)
+    alias(libs.plugins.hilt)
     alias(libs.plugins.kover)
 }
 
@@ -22,28 +22,27 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:model"))
-    
-    implementation(libs.retrofit)
     implementation(libs.converter.moshi)
+    implementation(libs.hilt.android)
+    implementation(libs.kotlinx.serialization.core)
+    implementation(libs.logging.interceptor)
     implementation(libs.moshi.kotlin)
     implementation(libs.okhttp)
-    implementation(libs.logging.interceptor)
-    implementation(libs.kotlinx.serialization.core)
+    implementation(libs.retrofit)
+    implementation(project(":core:model"))
 
-    implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     ksp(libs.moshi.kotlin.codegen)
 
-    testImplementation(project(":core:testing"))
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.robolectric)
-    testImplementation(libs.mockk)
-    testImplementation(libs.turbine)
-    testImplementation(libs.mockwebserver)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
+    testImplementation(libs.mockwebserver)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.turbine)
+    testImplementation(project(":core:testing"))
 }
 
 kover {

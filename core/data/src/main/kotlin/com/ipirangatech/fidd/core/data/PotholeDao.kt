@@ -21,7 +21,11 @@ interface PotholeDao {
     suspend fun insertPothole(pothole: PotholeEntity)
 
     @Query("UPDATE potholes SET isSynced = 1, serverId = :serverId, status = :status WHERE id = :id")
-    suspend fun markAsSynced(id: String, serverId: String, status: String)
+    suspend fun markAsSynced(
+        id: String,
+        serverId: String,
+        status: String,
+    )
 
     @Query("UPDATE potholes SET isFalseAlarm = 1 WHERE id = :id")
     suspend fun markAsFalseAlarm(id: String)

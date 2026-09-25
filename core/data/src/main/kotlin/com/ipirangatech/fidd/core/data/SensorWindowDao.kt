@@ -20,8 +20,14 @@ interface SensorWindowDao {
     fun getAllWindows(): Flow<List<SensorWindowEntity>>
 
     @Query("UPDATE sensor_windows SET label = :label WHERE potholeId = :potholeId")
-    suspend fun updateLabel(potholeId: String, label: String)
+    suspend fun updateLabel(
+        potholeId: String,
+        label: String,
+    )
 
     @Query("UPDATE sensor_windows SET note = :note WHERE potholeId = :potholeId")
-    suspend fun updateNote(potholeId: String, note: String)
+    suspend fun updateNote(
+        potholeId: String,
+        note: String,
+    )
 }

@@ -40,66 +40,72 @@ class AdsViewModelTest {
     }
 
     @Test
-    fun `shows ads to a user who has not bought the removal`() = runTest {
-        val vm = viewModel()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.showAds.collect {} }
-        assertTrue(vm.showAds.value)
-    }
+    fun `shows ads to a user who has not bought the removal`() =
+        runTest {
+            val vm = viewModel()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.showAds.collect {} }
+            assertTrue(vm.showAds.value)
+        }
 
     @Test
-    fun `hides ads while ownership is still unknown and after the purchase`() = runTest {
-        repository.adsRemoved.value = null
-        val vm = viewModel()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.showAds.collect {} }
-        assertFalse(vm.showAds.value)
+    fun `hides ads while ownership is still unknown and after the purchase`() =
+        runTest {
+            repository.adsRemoved.value = null
+            val vm = viewModel()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.showAds.collect {} }
+            assertFalse(vm.showAds.value)
 
-        repository.adsRemoved.value = false
-        assertTrue(vm.showAds.value)
-
-        repository.adsRemoved.value = true
-        assertFalse(vm.showAds.value)
-    }
-
-    @Test
-    fun `hides ads while detection is running`() = runTest {
-        val vm = viewModel()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.showAds.collect {} }
-
-        detector.startDetection()
-        detector.isTracking.awaitFirst { it }
-        vm.showAds.awaitFirst { !it }
-
-        detector.stopDetection()
-        vm.showAds.awaitFirst { it }
-    }
-
-    @Test
-    fun `remove ads click starts the purchase and thanks once it goes through`() = runTest {
-        val vm = viewModel()
-        vm.uiEffect.test {
-            vm.onRemoveAdsClick(activity)
-            assertEquals(1, repository.purchaseCalls)
+            repository.adsRemoved.value = false
+            assertTrue(vm.showAds.value)
 
             repository.adsRemoved.value = true
-            assertEquals(AdsUiEffect.ShowMessage(R.string.ads_purchase_thanks), awaitItem())
+            assertFalse(vm.showAds.value)
         }
-    }
 
     @Test
-    fun `an ownership restored at startup is not thanked`() = runTest {
-        val vm = viewModel()
-        vm.uiEffect.test {
-            repository.adsRemoved.value = true
-            expectNoEvents()
+    fun `hides ads while detection is running`() =
+        runTest {
+            val vm = viewModel()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.showAds.collect {} }
+
+            detector.startDetection()
+            detector.isTracking.awaitFirst { it }
+            vm.showAds.awaitFirst { !it }
+
+            detector.stopDetection()
+            vm.showAds.awaitFirst { it }
         }
-    }
 
     @Test
-    fun `a store that could not be reached is reported`() = runTest {
-        val vm = viewModel()
-        vm.uiEffect.test {
-            repository.purchaseFailures.emit(Unit)
-            assertEquals(AdsUiEffect.ShowMessage(R.string.ads_purchase_failed), awaitItem())
+    fun `remove ads click starts the purchase and thanks once it goes through`() =
+        runTest {
+            val vm = viewModel()
+            vm.uiEffect.test {
+                vm.onRemoveAdsClick(activity)
+                assertEquals(1, repository.purchaseCalls)
+
+                repository.adsRemoved.value = true
+                assertEquals(AdsUiEffect.ShowMessage(R.string.ads_purchase_thanks), awaitItem())
+            }
         }
-    }
+
+    @Test
+    fun `an ownership restored at startup is not thanked`() =
+        runTest {
+            val vm = viewModel()
+            vm.uiEffect.test {
+                repository.adsRemoved.value = true
+                expectNoEvents()
+            }
+        }
+
+    @Test
+    fun `a store that could not be reached is reported`() =
+        runTest {
+            val vm = viewModel()
+            vm.uiEffect.test {
+                repository.purchaseFailures.emit(Unit)
+                assertEquals(AdsUiEffect.ShowMessage(R.string.ads_purchase_failed), awaitItem())
+            }
+        }
 }
