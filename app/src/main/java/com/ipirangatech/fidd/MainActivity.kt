@@ -1,6 +1,8 @@
 package com.ipirangatech.fidd
 
 import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.compose.LocalActivity
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -19,8 +21,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,6 +37,11 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowWidthSizeClass
 import dagger.hilt.android.AndroidEntryPoint
+import com.ipirangatech.fidd.ads.AdPlacement
+import com.ipirangatech.fidd.ads.AdUnits
+import com.ipirangatech.fidd.ads.AdsUiEffect
+import com.ipirangatech.fidd.ads.AdsViewModel
+import com.ipirangatech.fidd.core.ads.SponsoredBanner
 import com.ipirangatech.fidd.feature.tracker.bridge.DebugDetailNavKey
 import com.ipirangatech.fidd.feature.tracker.bridge.DebugNavKey
 import com.ipirangatech.fidd.feature.tracker.bridge.HistoryNavKey
@@ -85,6 +95,37 @@ private fun MainContent() {
     val currentKey = backStack.lastOrNull() ?: TrackerNavKey
     val adaptiveInfo = currentWindowAdaptiveInfo()
     val isExpanded = adaptiveInfo.windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED
+
+    val context = LocalContext.current
+    val activity = LocalActivity.current
+    val adsViewModel: AdsViewModel = hiltViewModel()
+    val showAds by adsViewModel.showAds.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        adsViewModel.uiEffect.collect { effect ->
+            when (effect) {
+                is AdsUiEffect.ShowMessage ->
+                    Toast.makeText(context, context.getString(effect.messageRes), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+    // Onboarding e Debug nunca recebem; as telas decidem onde encaixar (ver cada adBanner).
+    // Um bloco de anúncios por tela (AdPlacement), para o AdMob separar a receita de cada uma.
+    val adBannerFor: ((AdPlacement) -> @Composable () -> Unit)? = if (showAds && activity != null) {
+        { placement ->
+            {
+                SponsoredBanner(
+                    adUnitId = AdUnits.banner(placement),
+                    onRemoveAds = { adsViewModel.onRemoveAdsClick(activity) }
+                )
+            }
+        }
+    } else {
+        null
+    }
+    // O NavDisplay guarda o conteúdo de cada NavEntry: uma lambda que capturasse `adBannerFor`
+    // direto ficaria com o valor da primeira composição (banner nunca aparecia, ou não sumia
+    // depois da compra). Lido por State, a entrada recompõe quando ele muda.
+    val currentAdBannerFor by rememberUpdatedState(adBannerFor)
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -160,8 +201,10 @@ private fun MainContent() {
                     modifier = Modifier.weight(1f),
                     // O mapa completo já aparece ao lado (MapScreen); sem isso, os dois painéis
                     // mostravam o mesmo mapa duplicado em tamanhos diferentes.
-                    showEmbeddedMap = false
+                    showEmbeddedMap = false,
+                    adBanner = adBannerFor?.invoke(AdPlacement.HOME)
                 )
+                // Sem banner aqui: o painel da esquerda já tem um, e dois lado a lado é poluição.
                 MapScreen(
                     viewModel = hiltViewModel<MapViewModel>(),
                     modifier = Modifier.weight(1f)
@@ -183,17 +226,27 @@ private fun MainContent() {
                                 onNavigateToMap = {
                                     backStack.clear()
                                     backStack.add(MapNavKey)
-                                }
+                                },
+                                adBanner = currentAdBannerFor?.invoke(AdPlacement.HOME)
                             )
                         }
                         is MapNavKey -> NavEntry(key) {
-                            MapScreen(viewModel = hiltViewModel<MapViewModel>())
+                            MapScreen(
+                                viewModel = hiltViewModel<MapViewModel>(),
+                                adBanner = currentAdBannerFor?.invoke(AdPlacement.MAP)
+                            )
                         }
                         is HistoryNavKey -> NavEntry(key) {
-                            HistoryScreen(viewModel = hiltViewModel<HistoryViewModel>())
+                            HistoryScreen(
+                                viewModel = hiltViewModel<HistoryViewModel>(),
+                                adBanner = currentAdBannerFor?.invoke(AdPlacement.HISTORY)
+                            )
                         }
                         is RankingNavKey -> NavEntry(key) {
-                            RankingScreen(viewModel = hiltViewModel<RankingViewModel>())
+                            RankingScreen(
+                                viewModel = hiltViewModel<RankingViewModel>(),
+                                adBanner = currentAdBannerFor?.invoke(AdPlacement.RANKING)
+                            )
                         }
                         is DebugNavKey -> NavEntry(key) {
                             DebugListScreen(

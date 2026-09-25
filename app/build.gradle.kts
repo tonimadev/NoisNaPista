@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -13,23 +15,47 @@ secrets {
     defaultPropertiesFileName = "local.defaults.properties"
 }
 
+// AdMob: IDs reais no admob.properties da raiz (git-ignored), um bloco de anúncios por ponto de
+// inserção para o AdMob separar a receita de cada tela. Arquivo próprio porque o local.properties
+// é reescrito pelo Android Studio, e tudo no secrets.properties vira campo no BuildConfig pelo
+// plugin Secrets (conflitaria com os campos gerados aqui). Sem eles cai nos IDs de teste oficiais do Google:
+// o build funciona, só não gera receita. Debug usa sempre o banner de teste (ver AdUnits.kt).
+val admobProperties = Properties().apply {
+    rootProject.file("admob.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+val admobTestAppId = "ca-app-pub-3940256099942544~3347511713"
+val admobTestBannerId = "ca-app-pub-3940256099942544/9214589741"
+val admobBannerKeys = listOf("ADMOB_BANNER_HOME", "ADMOB_BANNER_MAP", "ADMOB_BANNER_HISTORY", "ADMOB_BANNER_RANKING")
+fun admobId(key: String): String? = admobProperties.getProperty(key)?.trim()?.takeIf { it.isNotEmpty() }
+
+val missingAdmobKeys = (listOf("ADMOB_APP_ID") + admobBannerKeys).filter { admobId(it) == null }
+val buildsRelease = gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }
+if (buildsRelease && missingAdmobKeys.isNotEmpty()) {
+    logger.warn("w: AdMob sem ID real no admob.properties para $missingAdmobKeys: o release vai exibir anúncios de teste (sem receita).")
+}
+
 android {
     namespace = "com.ipirangatech.fidd"
     compileSdk {
-        version = release(37)
+        version = release(libs.versions.compileSdk.get().toInt())
     }
 
     defaultConfig {
         applicationId = "com.ipirangatech.fidd"
-        minSdk = 24
-        targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Fallback for the unit-test manifest merge, which the Secrets plugin doesn't reach; the
         // app variants still get the real key from secrets.properties.
         manifestPlaceholders["MAPS_API_KEY"] = "unit-test-placeholder"
+        // O MobileAdsInitProvider do SDK derruba o processo se o manifest não tiver App ID.
+        manifestPlaceholders["ADMOB_APP_ID"] = admobId("ADMOB_APP_ID") ?: admobTestAppId
+        admobBannerKeys.forEach { key ->
+            buildConfigField("String", key, "\"${admobId(key) ?: admobTestBannerId}\"")
+        }
     }
 
     buildTypes {
@@ -40,8 +66,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.toVersion(libs.versions.java.get())
+        targetCompatibility = JavaVersion.toVersion(libs.versions.java.get())
     }
     buildFeatures {
         compose = true
@@ -69,6 +95,8 @@ dependencies {
     implementation(project(":feature:ranking:bridge"))
     implementation(project(":feature:ranking:impl"))
     implementation(project(":core:data"))
+    implementation(project(":core:billing"))
+    implementation(project(":core:ads"))
 
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)

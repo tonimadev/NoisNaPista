@@ -60,7 +60,10 @@ import java.util.Locale
 @Composable
 fun HistoryScreen(
     viewModel: HistoryViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Banner de anúncio montado pelo app (null = sem anúncio: comprou "Remover anúncios" ou a
+    // detecção está ativa). A feature só reserva o lugar; não depende do SDK de anúncios.
+    adBanner: (@Composable () -> Unit)? = null
 ) {
     val potholes by viewModel.potholes.collectAsStateWithLifecycle()
     val communityPotholes by viewModel.communityPotholes.collectAsStateWithLifecycle()
@@ -113,6 +116,12 @@ fun HistoryScreen(
                         onDelete = { viewModel.onIntent(HistoryUiIntent.Delete(pothole)) }
                     )
                 }
+            }
+
+            // Entre as duas listas: separa "meus" de "comunidade" sem ficar colado nos botões de
+            // cada cartão (alarme falso/apagar/votar).
+            if (adBanner != null) {
+                item(key = "ad") { adBanner() }
             }
 
             item(key = "community-header") {

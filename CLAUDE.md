@@ -29,6 +29,8 @@ core/location          LocationProvider (interface) + AndroidLocationProvider (F
 core/sensor            MotionSensor + PotholeDetector (máquina de detecção) + TrackingService (foreground)
 core/data              Room, repositórios, DataStore (preferências/identidade), SyncWorker
 core/network           Retrofit + DTOs Moshi do backend
+core/billing           RemoveAdsRepository: compra única remove_ads_premium via lib PayWall (JitPack)
+core/ads               SDK do AdMob isolado: SponsoredBanner (banner + convite "Remover anúncios") e init
 core/testing           Fakes e utilitários de teste compartilhados (só testImplementation)
 feature/<x>/bridge     NavKey da feature (@Serializable, sem UI) — o que outros módulos podem ver
 feature/<x>/impl       Telas Compose + ViewModels
@@ -73,6 +75,12 @@ Padrão de tela (MVI):
   votar) mostra mensagem de erro. O botão "Atualizar" da comunidade tem que existir mesmo com a
   lista vazia.
 - A tela Debug/classificação só existe em build debug (`BuildConfig.DEBUG` no `MainActivity`).
+- **Anúncios: só AdMob, só banner** (decisão do usuário). Nunca com a detecção ativa (pessoa
+  dirigindo), nem no onboarding/Debug; sem banner enquanto a Play não disse se comprou (`adsRemoved`
+  null, com carência de 5 s). O `AdsViewModel` do app decide e passa `adBanner` às telas como slot
+  nulável; features não dependem do SDK. Debug usa sempre o banner de teste do Google (`AdUnits`).
+  IDs reais vão no `admob.properties` (raiz, git-ignored): `ADMOB_APP_ID` e um banner por tela
+  (`ADMOB_BANNER_HOME`/`_MAP`/`_HISTORY`/`_RANKING`, ver `AdPlacement`); sem eles, IDs de teste.
 - O usuário recusou um toggle "celular no suporte vs. na mão" (exigiria migração) — o campo de
   observação livre do Debug cobre isso. Não repropor sem informação nova.
 
@@ -90,6 +98,11 @@ Padrão de tela (MVI):
   `Migration` e bump de versão.
 - Um `<vector>` sem nenhum `<path>` compila mas quebra o ícone em runtime — use um path transparente.
 - `minSdk` 24: APIs Java/Android acima disso precisam de checagem de versão ou desugaring.
+- `NavDisplay` guarda o conteúdo de cada `NavEntry`: valor que muda (ex. `adBanner`) tem que ser lido
+  via `State` (`rememberUpdatedState`) dentro da entrada, senão fica congelado no da 1ª composição.
+- O `MobileAdsInitProvider` do AdMob derruba o processo sem `APPLICATION_ID` no manifest (daí o
+  placeholder de teste no `app/build.gradle.kts`). Em teste, `AdMobBanner` sob `LocalInspectionMode`
+  para não disparar `loadAd` na JVM.
 
 ## Testes
 
@@ -116,7 +129,7 @@ Compose UI Test sob Robolectric, MockWebServer, Hilt testing.
   `mockkStatic`. Depois que um mapa está na tela o looper principal fica ocupado: prepare o estado
   antes do `setContent`.
 - App shell (`MainActivityTest`): `@HiltAndroidTest` + `HiltTestApplication`, com `DataModule`,
-  `PreferencesModule`, `LocationModule` e `SensorModule` desinstalados e substituídos por
+  `PreferencesModule`, `LocationModule`, `SensorModule` e `BillingModule` desinstalados e substituídos por
   `@BindValue` (o DataStore real é singleton de processo e vazaria estado entre testes).
 - Biblioteca sem chave do Maps no manifest: use `setMapsApiKey(app)` (testes de `feature:tracker:impl`).
 
@@ -128,7 +141,8 @@ Código gerado (Hilt, Room `_Impl`, Moshi, serializers) e `@Preview` são exclu�
 
 - Comentários explicam o **porquê** (decisão, dado, bug que evitou); vários estão em pt-BR, outros
   em inglês — siga o idioma do arquivo.
-- Novas dependências entram em `gradle/libs.versions.toml`.
+- Novas dependências entram em `gradle/libs.versions.toml`, assim como `compileSdk`/`targetSdk`/
+  `minSdk`/`java` (lidos nos módulos com `libs.versions.x.get().toInt()`) — nada de versão literal.
 - Commits em inglês, imperativo, assunto descritivo (ver `git log`).
 - Validar mudança de UI no emulador/aparelho além dos testes; `adb emu sensor set acceleration 0:0:<z>`
   e `adb emu geo fix <lon> <lat>` simulam impacto e posição no emulador.

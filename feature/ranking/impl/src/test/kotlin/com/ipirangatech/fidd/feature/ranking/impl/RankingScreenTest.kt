@@ -1,5 +1,14 @@
 package com.ipirangatech.fidd.feature.ranking.impl
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.assertIsNotDisplayed
+import org.junit.Assert.assertTrue
 import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
@@ -68,11 +77,14 @@ class RankingScreenTest {
         compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
     }
 
-    private fun setContent(dark: Boolean = false): RankingViewModel {
+    private fun setContent(
+        dark: Boolean = false,
+        adBanner: (@androidx.compose.runtime.Composable () -> Unit)? = null
+    ): RankingViewModel {
         val vm = RankingViewModel(cities, location, preferences)
         compose.setContent {
-            if (dark) MaterialTheme(colorScheme = darkColorScheme()) { RankingScreen(viewModel = vm) }
-            else RankingScreen(viewModel = vm)
+            if (dark) MaterialTheme(colorScheme = darkColorScheme()) { RankingScreen(viewModel = vm, adBanner = adBanner) }
+            else RankingScreen(viewModel = vm, adBanner = adBanner)
         }
         return vm
     }
@@ -102,6 +114,43 @@ class RankingScreenTest {
 
         waitForText(str(R.string.ranking_top_header_format, str(R.string.ranking_metric_recurrence_lower)))
         compose.onNodeWithText(str(R.string.ranking_bottom_header_format, str(R.string.ranking_metric_recurrence_lower))).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the ad sits between the top and bottom sections`() {
+        cities.rankingResult = { Result.success(list) }
+        setContent(adBanner = { Box(Modifier.testTag("ad").fillMaxWidth().height(50.dp)) })
+
+        val ad = compose.onNodeWithTag("ad").fetchSemanticsNode().boundsInRoot
+        val topRow = compose.onNodeWithText("Campinas").fetchSemanticsNode().boundsInRoot
+        val bottomHeader = compose.onNodeWithText(
+            str(R.string.ranking_bottom_header_format, str(R.string.ranking_metric_potholes_lower))
+        ).fetchSemanticsNode().boundsInRoot
+        assertTrue(topRow.bottom <= ad.top && ad.bottom <= bottomHeader.top)
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h700dp")
+    fun `with an ad, jumping to my city in the bottom section lands on its row`() {
+        // O banner é um item a mais antes da seção de baixo; sem contá-lo, o pulo parava uma
+        // linha antes (no cabeçalho), e numa lista maior a cidade podia nem aparecer.
+        shadowOf(app).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
+        runBlocking { preferences.saveLastLocation(-23.5, -46.6) }
+        location.currentLocation = testLocation()
+        // Linhas depois de Santos, para a lista ter como rolar até deixá-lo no topo.
+        val below = (10..19).map { testCityRanking(ibgeCode = it, name = "Cidade $it", totalPotholes = 0, rank = it) }
+        cities.rankingResult = { Result.success(list.copy(bottom = listOf(santos) + below)) }
+        cities.nearestResult = { _, _, _ -> Result.success(santos) }
+        setContent(adBanner = { Box(Modifier.testTag("ad").fillMaxWidth().height(50.dp)) })
+        waitForText(str(R.string.ranking_view_in_list_button))
+
+        compose.onNodeWithText(str(R.string.ranking_view_in_list_button)).performClick()
+        compose.waitForIdle()
+
+        compose.onNodeWithText(
+            str(R.string.ranking_bottom_header_format, str(R.string.ranking_metric_potholes_lower))
+        ).assertIsNotDisplayed()
+        compose.onNodeWithTag("ad").assertIsNotDisplayed()
     }
 
     @Test

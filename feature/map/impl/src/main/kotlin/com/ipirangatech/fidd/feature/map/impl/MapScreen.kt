@@ -2,6 +2,10 @@ package com.ipirangatech.fidd.feature.map.impl
 
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,7 +59,10 @@ import java.util.Date
 @Composable
 fun MapScreen(
     viewModel: MapViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Banner de anúncio montado pelo app (null = sem anúncio: comprou "Remover anúncios" ou a
+    // detecção está ativa). A feature só reserva o lugar; não depende do SDK de anúncios.
+    adBanner: (@Composable () -> Unit)? = null
 ) {
     val potholes by viewModel.potholes.collectAsStateWithLifecycle()
     val communityPotholes by viewModel.communityPotholes.collectAsStateWithLifecycle()
@@ -128,6 +135,13 @@ fun MapScreen(
     Scaffold(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        // No topo, e não embaixo: o canto inferior já tem os FABs e a barra de navegação, e um
+        // banner colado neles vira clique acidental.
+        topBar = {
+            if (adBanner != null) {
+                Box(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = 8.dp)) { adBanner() }
+            }
+        },
         floatingActionButton = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,

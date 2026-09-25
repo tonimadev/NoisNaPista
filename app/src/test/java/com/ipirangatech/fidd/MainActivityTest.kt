@@ -6,7 +6,12 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.ipirangatech.fidd.core.billing.BillingModule
+import com.ipirangatech.fidd.core.billing.RemoveAdsRepository
 import com.ipirangatech.fidd.core.data.CityRepository
+import com.ipirangatech.fidd.core.testing.FakeRemoveAdsRepository
+import com.ipirangatech.fidd.core.ads.R as AdsR
+import org.junit.Assert.assertEquals
 import com.ipirangatech.fidd.core.data.DataModule
 import com.ipirangatech.fidd.core.data.OnboardingPreferences
 import com.ipirangatech.fidd.core.data.PotholeRepository
@@ -55,7 +60,7 @@ import com.ipirangatech.fidd.feature.tracker.impl.R as TrackerR
  * swapped for fakes so nothing touches the network, GPS or sensors.
  */
 @HiltAndroidTest
-@UninstallModules(DataModule::class, PreferencesModule::class, LocationModule::class, SensorModule::class)
+@UninstallModules(DataModule::class, PreferencesModule::class, LocationModule::class, SensorModule::class, BillingModule::class)
 @Config(application = HiltTestApplication::class, qualifiers = "w411dp-h2000dp")
 @RunWith(RobolectricTestRunner::class)
 class MainActivityTest {
@@ -85,6 +90,12 @@ class MainActivityTest {
     @BindValue
     @JvmField
     val motionSensor: MotionSensor = FakeMotionSensor()
+
+    private val fakeRemoveAds = FakeRemoveAdsRepository(adsRemoved = false)
+
+    @BindValue
+    @JvmField
+    val removeAdsRepository: RemoveAdsRepository = fakeRemoveAds
 
     // The real DataStore is a process-wide singleton that would leak onboarding state between tests.
     private val dataStoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -124,6 +135,20 @@ class MainActivityTest {
     }
 
     @Test
+    fun `Home invites to remove ads, buying hides them`() {
+        completeOnboarding()
+        waitForText(str(AdsR.string.ads_remove_button))
+
+        compose.onNodeWithText(str(AdsR.string.ads_remove_button)).performClick()
+        assertEquals(1, fakeRemoveAds.purchaseCalls)
+
+        fakeRemoveAds.adsRemoved.value = true
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText(str(AdsR.string.ads_remove_button))).fetchSemanticsNodes().isEmpty()
+        }
+    }
+
+    @Test
     fun `bottom navigation reaches every screen`() {
         completeOnboarding()
 
@@ -159,7 +184,7 @@ class MainActivityTest {
 
 /** Wide screens show Home and the full map side by side instead of switching tabs. */
 @HiltAndroidTest
-@UninstallModules(DataModule::class, PreferencesModule::class, LocationModule::class, SensorModule::class)
+@UninstallModules(DataModule::class, PreferencesModule::class, LocationModule::class, SensorModule::class, BillingModule::class)
 @Config(application = HiltTestApplication::class, qualifiers = "w1280dp-h800dp-night")
 @RunWith(RobolectricTestRunner::class)
 class MainActivityExpandedTest {
@@ -185,6 +210,12 @@ class MainActivityExpandedTest {
     @BindValue
     @JvmField
     val motionSensor: MotionSensor = FakeMotionSensor()
+
+    private val fakeRemoveAds = FakeRemoveAdsRepository(adsRemoved = false)
+
+    @BindValue
+    @JvmField
+    val removeAdsRepository: RemoveAdsRepository = fakeRemoveAds
 
     // The real DataStore is a process-wide singleton that would leak onboarding state between tests.
     private val dataStoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

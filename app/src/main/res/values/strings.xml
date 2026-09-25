@@ -6,4 +6,6 @@
     <string name="nav_history">Histórico</string>
     <string name="nav_ranking">Ranking</string>
     <string name="nav_debug">Debug</string>
+    <string name="ads_purchase_failed">Não foi possível abrir a Play Store. Tente de novo em instantes.</string>
+    <string name="ads_purchase_thanks">Pronto! Os anúncios foram removidos. Obrigado por apoiar o FIDD.</string>
 </resources>

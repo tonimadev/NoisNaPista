@@ -1,5 +1,13 @@
 package com.ipirangatech.fidd.feature.tracker.impl
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.onNodeWithTag
+import org.junit.Assert.assertTrue
 import android.app.Application
 import android.content.Intent
 import androidx.compose.ui.test.assertCountEquals
@@ -35,9 +43,19 @@ class HistoryScreenTest {
 
     private fun str(id: Int, vararg args: Any) = app.getString(id, *args)
 
-    private fun setContent() {
+    private fun setContent(adBanner: (@androidx.compose.runtime.Composable () -> Unit)? = null) {
         val vm = HistoryViewModel(repository, location)
-        compose.setContent { HistoryScreen(viewModel = vm) }
+        compose.setContent { HistoryScreen(viewModel = vm, adBanner = adBanner) }
+    }
+
+    @Test
+    fun `the ad sits between my detections and the community list`() {
+        setContent(adBanner = { Box(Modifier.testTag("ad").fillMaxWidth().height(50.dp)) })
+
+        val ad = compose.onNodeWithTag("ad").fetchSemanticsNode().boundsInRoot
+        val mine = compose.onNodeWithText(str(R.string.common_no_pothole_detected)).fetchSemanticsNode().boundsInRoot
+        val community = compose.onNodeWithText(str(R.string.history_community_header)).fetchSemanticsNode().boundsInRoot
+        assertTrue(mine.bottom <= ad.top && ad.bottom <= community.top)
     }
 
     @Test

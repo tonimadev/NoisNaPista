@@ -1,5 +1,12 @@
 package com.ipirangatech.fidd.feature.tracker.impl
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.onNodeWithTag
 import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
@@ -70,11 +77,15 @@ class TrackerScreenTest {
 
     private fun grant(vararg permissions: String) = shadowOf(app).grantPermissions(*permissions)
 
-    private fun setContent(showEmbeddedMap: Boolean = false, startedBefore: Boolean = true) {
+    private fun setContent(
+        showEmbeddedMap: Boolean = false,
+        startedBefore: Boolean = true,
+        adBanner: (@androidx.compose.runtime.Composable () -> Unit)? = null
+    ) {
         val preferences = OnboardingPreferences(testPreferencesDataStore(dataStoreScope, tmp.root))
         if (startedBefore) runBlocking { preferences.markDetectionStarted() }
         viewModel = TrackerViewModel(app, detector, location, repository, preferences)
-        compose.setContent { TrackerScreen(viewModel = viewModel, showEmbeddedMap = showEmbeddedMap) }
+        compose.setContent { TrackerScreen(viewModel = viewModel, showEmbeddedMap = showEmbeddedMap, adBanner = adBanner) }
     }
 
     private fun waitForText(text: String) = compose.waitUntil(3_000) {
@@ -95,6 +106,18 @@ class TrackerScreenTest {
     }
 
     private fun startedService() = shadowOf(app).nextStartedService?.component?.className
+
+    @Test
+    fun `the ad slot renders only when the app provides a banner`() {
+        setContent(adBanner = { Box(Modifier.testTag("ad").fillMaxWidth().height(50.dp)) })
+        compose.onNodeWithTag("ad").assertExists()
+    }
+
+    @Test
+    fun `without a banner there is no ad slot`() {
+        setContent()
+        compose.onNodeWithTag("ad").assertDoesNotExist()
+    }
 
     @Test
     fun `first run without location explains how it works and why location is needed`() {

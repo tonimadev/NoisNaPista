@@ -6,10 +6,10 @@ plugins {
 
 android {
     namespace = "com.ipirangatech.fidd.core.ui"
-    compileSdk = 37
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 24
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     buildFeatures {

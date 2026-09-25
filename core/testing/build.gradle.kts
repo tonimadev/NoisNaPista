@@ -4,10 +4,10 @@ plugins {
 
 android {
     namespace = "com.ipirangatech.fidd.core.testing"
-    compileSdk = 37
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 24
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 }
 
@@ -17,6 +17,7 @@ dependencies {
     api(project(":core:data"))
     api(project(":core:location"))
     api(project(":core:sensor"))
+    api(project(":core:billing"))
     api(libs.junit)
     api(libs.kotlinx.coroutines.test)
     api(libs.androidx.datastore.preferences)

@@ -82,7 +82,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun RankingScreen(
     viewModel: RankingViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Banner de anúncio montado pelo app (null = sem anúncio: comprou "Remover anúncios" ou a
+    // detecção está ativa). A feature só reserva o lugar; não depende do SDK de anúncios.
+    adBanner: (@Composable () -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -112,6 +115,7 @@ fun RankingScreen(
     val topTitle = stringResource(R.string.ranking_top_header_format, metricLabel)
     val bottomTitle = stringResource(R.string.ranking_bottom_header_format, metricLabel)
     val showMyCityCard = !uiState.loadFailed
+    val adItems = if (adBanner != null && hasContent) 1 else 0
 
     Scaffold(
         modifier = modifier,
@@ -178,12 +182,12 @@ fun RankingScreen(
                                 onScrollToRow = {
                                     val city = uiState.myCity ?: return@MyCityCard
                                     // Mirrors the item order below: [my-city], top header, top rows,
-                                    // bottom header, bottom rows.
+                                    // [ad], bottom header, bottom rows.
                                     val topIndex = uiState.top.indexOfFirst { it.ibgeCode == city.ibgeCode }
                                     val bottomIndex = uiState.bottom.indexOfFirst { it.ibgeCode == city.ibgeCode }
                                     val targetIndex = when {
                                         topIndex >= 0 -> 2 + topIndex
-                                        bottomIndex >= 0 -> 2 + uiState.top.size + 1 + bottomIndex
+                                        bottomIndex >= 0 -> 2 + uiState.top.size + adItems + 1 + bottomIndex
                                         else -> null
                                     }
                                     if (targetIndex != null) {
@@ -205,6 +209,12 @@ fun RankingScreen(
                                 metric = uiState.sortBy,
                                 myCityCode = uiState.myCity?.ibgeCode
                             )
+                            // Entre o topo e o fim do ranking: uma pausa natural na leitura.
+                            if (adBanner != null) {
+                                item(key = "ad") {
+                                    Box(Modifier.padding(vertical = 8.dp)) { adBanner() }
+                                }
+                            }
                             if (uiState.bottom.isNotEmpty()) {
                                 rankingSection(
                                     key = "bottom",

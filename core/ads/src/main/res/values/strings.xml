@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ads_invite">Os anúncios ajudam a manter o FIDD gratuito.</string>
+    <string name="ads_remove_button">Remover anúncios</string>
+</resources>

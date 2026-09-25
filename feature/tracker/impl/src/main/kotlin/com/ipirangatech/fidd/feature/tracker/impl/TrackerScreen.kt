@@ -113,7 +113,10 @@ fun TrackerScreen(
     // Falso no painel esquerdo do layout de tela expandida (ver MainActivity), onde o mapa
     // completo já aparece ao lado em MapScreen — evitar duas cópias do mesmo mapa e usar o
     // espaço liberado para o histórico de atividade recente.
-    showEmbeddedMap: Boolean = true
+    showEmbeddedMap: Boolean = true,
+    // Banner de anúncio montado pelo app (null = sem anúncio: comprou "Remover anúncios" ou a
+    // detecção está ativa). A feature só reserva o lugar; não depende do SDK de anúncios.
+    adBanner: (@Composable () -> Unit)? = null
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -293,6 +296,12 @@ fun TrackerScreen(
                     z = uiState.sensorZ,
                     verticalIntensity = uiState.sensorIntensity
                 )
+            }
+
+            // Depois do status/sensores: longe do botão de iniciar/parar, para não virar clique
+            // acidental (política do AdMob) nem tirar o foco do que importa.
+            if (adBanner != null) {
+                item(key = "ad") { adBanner() }
             }
 
             item(key = "recent_title") {

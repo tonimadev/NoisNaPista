@@ -19,6 +19,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // PayWall (compra "Remover anúncios") só é publicada no JitPack.
+        maven {
+            url = uri("https://jitpack.io")
+            content { includeGroup("com.github.tonimadev.PayWall") }
+        }
     }
 }
 
@@ -31,6 +36,8 @@ include(":core:sensor")
 include(":core:data")
 include(":core:network")
 include(":core:testing")
+include(":core:billing")
+include(":core:ads")
 include(":feature:tracker:bridge")
 include(":feature:tracker:impl")
 include(":feature:onboarding")

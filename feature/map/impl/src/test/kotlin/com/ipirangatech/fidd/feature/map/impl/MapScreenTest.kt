@@ -1,5 +1,12 @@
 package com.ipirangatech.fidd.feature.map.impl
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.onNodeWithTag
 import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -46,9 +53,9 @@ class MapScreenTest {
         unmockkAll()
     }
 
-    private fun setContent(): MapViewModel {
+    private fun setContent(adBanner: (@androidx.compose.runtime.Composable () -> Unit)? = null): MapViewModel {
         val vm = MapViewModel(repository, location, detector)
-        compose.setContent { MapScreen(viewModel = vm) }
+        compose.setContent { MapScreen(viewModel = vm, adBanner = adBanner) }
         return vm
     }
 
@@ -65,6 +72,15 @@ class MapScreenTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
         assertEquals(2, repository.fetchedBounds.size)
+    }
+
+    @Test
+    fun `the ad goes above the map, away from the FABs`() {
+        setContent(adBanner = { Box(Modifier.testTag("ad").fillMaxWidth().height(50.dp)) })
+
+        val ad = compose.onNodeWithTag("ad").fetchSemanticsNode().boundsInRoot
+        val fab = compose.onNodeWithContentDescription(app.getString(R.string.map_recenter_cd)).fetchSemanticsNode().boundsInRoot
+        org.junit.Assert.assertTrue(ad.bottom < fab.top)
     }
 
     @Test
