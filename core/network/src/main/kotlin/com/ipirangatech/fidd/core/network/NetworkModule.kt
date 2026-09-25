@@ -19,7 +19,7 @@ object NetworkModule {
     // Deployed NoisNaPistaBackend. To test against a local `./gradlew bootRun` instead, switch to
     // "http://localhost:8080/" and run `adb reverse tcp:8080 tcp:8080` (cleartext to localhost is
     // already allowed by network_security_config.xml).
-    private const val BASE_URL = "https://api.fidd.com.br/"
+    private const val BASE_URL = "https://fidd.com.br/"
 
     @Provides
     @Singleton
