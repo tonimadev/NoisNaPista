@@ -66,6 +66,9 @@ android {
         }
     }
     compileOptions {
+        // minSdk 24 não tem java.time (só a partir da API 26): sem isso o Instant.parse do
+        // PotholeRepositoryImpl derruba o app no Android 7.x ao carregar os buracos da comunidade.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.toVersion(libs.versions.java.get())
         targetCompatibility = JavaVersion.toVersion(libs.versions.java.get())
     }
@@ -83,6 +86,8 @@ android {
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
     implementation(project(":core:model"))
     implementation(project(":core:ui"))
     implementation(project(":core:location"))

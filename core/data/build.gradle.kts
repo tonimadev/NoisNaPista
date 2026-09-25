@@ -13,6 +13,12 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
     }
 
+    // Usa java.time (Instant.parse), que só existe nativamente a partir da API 26. O app
+    // desaçucara no dex final; aqui é para o lint (NewApi) saber disso.
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+    }
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -22,6 +28,8 @@ android {
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
     implementation(project(":core:model"))
     implementation(project(":core:network"))
     
