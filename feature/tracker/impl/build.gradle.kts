@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "digital.tonima.noisnapista.feature.tracker.impl"
+    namespace = "com.ipirangatech.fidd.feature.tracker.impl"
     compileSdk = 37
 
     defaultConfig {

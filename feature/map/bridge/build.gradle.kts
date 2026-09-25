@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "digital.tonima.noisnapista.feature.map.bridge"
+    namespace = "com.ipirangatech.fidd.feature.map.bridge"
     compileSdk = 37
 
     defaultConfig {

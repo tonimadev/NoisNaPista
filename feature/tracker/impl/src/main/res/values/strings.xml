@@ -5,7 +5,7 @@
     <string name="common_refresh">Atualizar</string>
     <string name="common_back_cd">Voltar</string>
 
-    <string name="tracker_app_title">NóisNaPista</string>
+    <string name="tracker_app_title">FIDD</string>
     <string name="tracker_app_subtitle">Mapa colaborativo de buracos</string>
     <string name="tracker_current_location_label">Sua Localização Atual:</string>
     <string name="tracker_lat_lon_format">Lat: %1$.5f, Lon: %2$.5f</string>

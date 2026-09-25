@@ -1,6 +1,6 @@
-# NóisNaPista
+# FIDD — Ferramenta Inteligente de Detecção de Danos
 
-**NóisNaPista** ("we're on the road" / "buracos na pista") is an Android app that turns any
+**FIDD** ("Intelligent Damage Detection Tool") is an Android app that turns any
 phone into a crowdsourced pothole detector. It watches the accelerometer while you drive,
 tags every bump against the phone's GPS fix, and — once a threshold is crossed — logs it as a
 detected pothole. Detections sync to a backend so they can be aggregated into a

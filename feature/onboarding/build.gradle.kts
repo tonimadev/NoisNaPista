@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "digital.tonima.noisnapista.feature.onboarding"
+    namespace = "com.ipirangatech.fidd.feature.onboarding"
     compileSdk = 37
 
     defaultConfig {

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "digital.tonima.noisnapista.feature.ranking.bridge"
+    namespace = "com.ipirangatech.fidd.feature.ranking.bridge"
     compileSdk = 37
 
     defaultConfig {

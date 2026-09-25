@@ -13,13 +13,13 @@ secrets {
 }
 
 android {
-    namespace = "digital.tonima.noisnapista"
+    namespace = "com.ipirangatech.fidd"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "digital.tonima.noisnapista"
+        applicationId = "com.ipirangatech.fidd"
         minSdk = 24
         targetSdk = 37
         versionCode = 1

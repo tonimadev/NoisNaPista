@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <application
-        android:name=".NoisNaPistaApp"
+        android:name=".FiddApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -19,7 +19,7 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.NóisNaPista">
+        android:theme="@style/Theme.Fidd">
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -27,12 +27,12 @@
 
         <!-- WorkManager self-initializes via this provider during ContentProvider#onCreate(),
              which runs before Application#onCreate() — i.e. before Hilt injects our
-             HiltWorkerFactory into NoisNaPistaApp. Left as-is, WorkManager would build its
+             HiltWorkerFactory into FiddApp. Left as-is, WorkManager would build its
              default Configuration (default WorkerFactory) instead of ever asking
-             NoisNaPistaApp.workManagerConfiguration, silently breaking @HiltWorker injection
+             FiddApp.workManagerConfiguration, silently breaking @HiltWorker injection
              (SyncWorker would fail with "Could not instantiate ... NoSuchMethodException").
              Removing just the WorkManagerInitializer meta-data opts out of that auto-init so our
-             Configuration.Provider is used instead — see NoisNaPistaApp. -->
+             Configuration.Provider is used instead — see FiddApp. -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
@@ -45,7 +45,7 @@
         </provider>
 
         <service
-            android:name="digital.tonima.noisnapista.core.sensor.tracking.TrackingService"
+            android:name="com.ipirangatech.fidd.core.sensor.tracking.TrackingService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="location" />
@@ -54,7 +54,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.NóisNaPista"
+            android:theme="@style/Theme.Fidd"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

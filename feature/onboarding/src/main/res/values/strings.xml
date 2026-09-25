@@ -4,7 +4,7 @@
     <string name="onboarding_start">Vamos lá</string>
 
     <string name="onboarding_page1_title">Mapeie buracos só dirigindo</string>
-    <string name="onboarding_page1_description">O NóisNaPista detecta os buracos da pista enquanto você dirige e marca cada um num mapa colaborativo. Quanto mais gente dirige com o app, mais completo o mapa fica pra todo mundo.</string>
+    <string name="onboarding_page1_description">O FIDD detecta os buracos da pista enquanto você dirige e marca cada um num mapa colaborativo. Quanto mais gente dirige com o app, mais completo o mapa fica pra todo mundo.</string>
 
     <string name="onboarding_page2_title">Ative a detecção antes de sair</string>
     <string name="onboarding_page2_description">O app só encontra buracos com a detecção ligada. É um toque na tela inicial — depois pode bloquear o celular e dirigir normalmente. Uma notificação avisa enquanto ela estiver ativa, e dá pra pausar por ali mesmo.</string>

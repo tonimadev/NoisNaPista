@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "digital.tonima.noisnapista.core.location"
+    namespace = "com.ipirangatech.fidd.core.location"
     compileSdk = 37
 
     defaultConfig {

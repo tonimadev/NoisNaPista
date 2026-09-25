@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "digital.tonima.noisnapista.core.sensor"
+    namespace = "com.ipirangatech.fidd.core.sensor"
     compileSdk = 37
 
     defaultConfig {

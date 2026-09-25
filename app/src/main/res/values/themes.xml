@@ -1,4 +1,4 @@
 <resources>
 
-    <style name="Theme.NóisNaPista" parent="Theme.MaterialComponents.Light" />
+    <style name="Theme.Fidd" parent="Theme.MaterialComponents.Light" />
 </resources>

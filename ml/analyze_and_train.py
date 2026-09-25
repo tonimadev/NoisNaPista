@@ -1,10 +1,10 @@
 """
-NoisNaPista - analise exploratoria + treino de um classificador binario
+FIDD - analise exploratoria + treino de um classificador binario
 "deteccao real x alarme falso" a partir das janelas de acelerometro
 capturadas e rotuladas manualmente no app (tela de Debug).
 
-Fonte dos dados: banco Room 'noisnapista.db' puxado do celular via
-'adb ... run-as digital.tonima.noisnapista cat databases/noisnapista.db'
+Fonte dos dados: banco Room 'fidd.db' puxado do celular via
+'adb ... run-as com.ipirangatech.fidd cat databases/fidd.db'
 e exportado para JSON com sqlite3 -json (tabelas potholes + sensor_windows).
 """
 import json

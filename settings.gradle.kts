@@ -22,7 +22,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "NóisNaPista"
+rootProject.name = "FIDD"
 include(":app")
 include(":core:model")
 include(":core:ui")
