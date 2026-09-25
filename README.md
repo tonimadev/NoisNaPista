@@ -78,7 +78,7 @@ ml/                      Offline Python pipeline (pandas/scikit-learn) for train
    ```
    `secrets.properties` is gitignored; `local.defaults.properties` only holds a placeholder so
    the project still compiles without a key (maps just won't render tiles).
-3. The app talks to the deployed backend at `https://api.fidd.com.br/` (see
+3. The app talks to the deployed backend at `https://fidd.com.br/` (see
    `core/network/.../NetworkModule.kt`). To develop against a local copy of the companion
    `NoisNaPistaBackend` Spring Boot project instead, point `BASE_URL` at
    `http://localhost:8080/` and expose it to the device:
@@ -96,9 +96,13 @@ ml/                      Offline Python pipeline (pandas/scikit-learn) for train
 
 ```bash
 ./gradlew assembleDebug     # build a debug APK
-./gradlew test              # unit tests
+./gradlew testDebugUnitTest :core:model:test  # unit tests (JVM + Robolectric, incl. Compose UI tests)
+./gradlew koverHtmlReportCoverage             # aggregated coverage -> build/reports/kover/htmlCoverage/
+./gradlew koverVerifyCoverage                 # fails below 90% line / 75% branch coverage
 ./gradlew connectedAndroidTest  # instrumented tests (needs a connected device/emulator)
 ```
+
+Shared fakes and test helpers live in `core/testing`. See `CLAUDE.md` for the testing conventions.
 
 ## Permissions
 
