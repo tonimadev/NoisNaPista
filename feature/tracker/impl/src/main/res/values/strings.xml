@@ -1,5 +1,5 @@
 <resources>
-    <string name="common_no_pothole_detected">Nenhum buraco por aqui ainda. Ative a detecção e dirija normalmente — os buracos que você passar aparecem nesta lista.</string>
+    <string name="common_no_pothole_detected">Nenhuma detecção ainda. Ative a detecção e dirija normalmente — cada buraco encontrado no caminho aparece nesta lista.</string>
     <string name="common_no_maps_app_found">Nenhum app de mapas encontrado</string>
     <string name="common_placeholder_dash">—</string>
     <string name="common_refresh">Atualizar</string>
@@ -10,7 +10,7 @@
     <string name="tracker_current_location_label">Sua Localização Atual:</string>
     <string name="tracker_lat_lon_format">Lat: %1$.5f, Lon: %2$.5f</string>
     <string name="tracker_waiting_gps">Aguardando sinal de GPS...</string>
-    <string name="tracker_recent_activity_title">Seus buracos recentes</string>
+    <string name="tracker_recent_activity_title">Detecções recentes</string>
     <string name="tracker_gps_label">GPS: </string>
     <string name="tracker_gps_active">Ativo</string>
     <string name="tracker_gps_inactive">Inativo</string>
@@ -40,20 +40,20 @@
     <string name="tracker_status_on_title">Detectando buracos</string>
     <string name="tracker_status_on_body">Pode bloquear a tela e dirigir. Para pausar, use o botão abaixo ou a notificação.</string>
     <plurals name="tracker_pothole_count_format">
-        <item quantity="one">Você já ajudou a mapear %1$d buraco.</item>
-        <item quantity="many">Você já ajudou a mapear %1$d buracos.</item>
-        <item quantity="other">Você já ajudou a mapear %1$d buracos.</item>
+        <item quantity="one">Você já ajudou a mapear %1$d buraco na pista.</item>
+        <item quantity="many">Você já ajudou a mapear %1$d buracos na pista.</item>
+        <item quantity="other">Você já ajudou a mapear %1$d buracos na pista.</item>
     </plurals>
 
     <string name="tracker_how_it_works_title">Como funciona</string>
     <string name="tracker_how_it_works_step1">Toque em \"Ativar detecção\" e permita o acesso à localização.</string>
     <string name="tracker_how_it_works_step2">Deixe o celular num suporte ou em um lugar firme do carro — solto no banco ou no bolso a leitura fica menos precisa.</string>
-    <string name="tracker_how_it_works_step3">Dirija normalmente. Os buracos que você passar aparecem aqui e no mapa da comunidade.</string>
+    <string name="tracker_how_it_works_step3">Dirija normalmente. Cada buraco encontrado no caminho aparece aqui e no mapa colaborativo.</string>
 
     <string name="tracker_sensor_details_toggle">Ver sensores em tempo real</string>
 
     <string name="tracker_permission_rationale_title">Localização para marcar os buracos</string>
-    <string name="tracker_permission_rationale_body">Para saber onde está cada buraco, o app usa o GPS. Em segundo plano, ele só é usado enquanto a detecção estiver ligada. Os relatos são anônimos: o mapa mostra o buraco, nunca quem passou por ele.\n\nNa próxima tela, escolha \"Durante o uso do app\" e mantenha a localização precisa ativada.</string>
+    <string name="tracker_permission_rationale_body">Para saber onde está cada buraco, o app usa o GPS. Em segundo plano, ele só é usado enquanto a detecção estiver ligada. Os relatos são anônimos: o mapa mostra onde está o buraco, nunca quem fez o relato.\n\nNa próxima tela, escolha \"Durante o uso do app\" e mantenha a localização precisa ativada.</string>
     <string name="tracker_permission_rationale_confirm">Continuar</string>
     <string name="tracker_permission_precise_title">Precisamos da localização precisa</string>
     <string name="tracker_permission_precise_body">Com a localização aproximada, o buraco pode ser marcado a centenas de metros do lugar certo. Ative a opção \"Usar localização precisa\" para que o mapa seja útil.</string>
@@ -66,7 +66,7 @@
 
     <string name="history_title">Histórico de Detecções</string>
     <string name="history_community_header">Comunidade por perto</string>
-    <string name="history_community_empty">Nenhum buraco da comunidade por perto.</string>
+    <string name="history_community_empty">Nenhum buraco relatado pela comunidade por perto.</string>
     <string name="history_false_alarm_label">Alarme Falso</string>
     <string name="history_pothole_detected_label">Buraco Detectado</string>
     <string name="history_synced">Sincronizado</string>
@@ -81,7 +81,7 @@
     <string name="history_vote_marked_fixed">Buraco marcado como corrigido!</string>
     <string name="history_vote_registered">Voto registrado</string>
     <string name="history_vote_failed">Não foi possível votar agora. Tente novamente.</string>
-    <string name="history_community_refresh_failed">Não foi possível atualizar os buracos da comunidade</string>
+    <string name="history_community_refresh_failed">Não foi possível atualizar os relatos da comunidade</string>
     <string name="history_community_location_unavailable">Não foi possível obter sua localização para buscar buracos por perto</string>
 
     <string name="debug_list_title">Debug: Classificar Detecções</string>
@@ -101,7 +101,7 @@
     <string name="debug_map_location_cd">Localização no mapa</string>
     <string name="debug_sensor_window_title">Janela do sensor (-2s a +1s do impacto)</string>
     <string name="debug_classification_title">Classificação</string>
-    <string name="debug_note_label">Observações (ex: \"buraco fundo depois da lombada\")</string>
+    <string name="debug_note_label">Observações (ex: \"buraco grande logo depois da lombada\")</string>
     <string name="debug_metadata_datetime">Data/hora</string>
     <string name="debug_metadata_location">Localização</string>
     <string name="debug_lat_lon_precise_format">%1$.6f, %2$.6f</string>

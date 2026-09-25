@@ -4,11 +4,11 @@
     <string name="onboarding_start">Vamos lá</string>
 
     <string name="onboarding_page1_title">Mapeie buracos só dirigindo</string>
-    <string name="onboarding_page1_description">O NóisNaPista sente os buracos pelos quais você passa e marca cada um num mapa colaborativo. Quanto mais gente dirige com o app, mais completo o mapa fica pra todo mundo.</string>
+    <string name="onboarding_page1_description">O NóisNaPista detecta os buracos da pista enquanto você dirige e marca cada um num mapa colaborativo. Quanto mais gente dirige com o app, mais completo o mapa fica pra todo mundo.</string>
 
     <string name="onboarding_page2_title">Ative a detecção antes de sair</string>
     <string name="onboarding_page2_description">O app só encontra buracos com a detecção ligada. É um toque na tela inicial — depois pode bloquear o celular e dirigir normalmente. Uma notificação avisa enquanto ela estiver ativa, e dá pra pausar por ali mesmo.</string>
 
     <string name="onboarding_page3_title">Sua localização marca o buraco, não você</string>
-    <string name="onboarding_page3_description">Vamos pedir acesso à localização porque é ela que diz onde cada buraco está. Com o app fechado, ela só é usada enquanto a detecção estiver ligada, e os relatos são anônimos: ninguém sabe quem passou por ali.</string>
+    <string name="onboarding_page3_description">Vamos pedir acesso à localização porque é ela que diz onde cada buraco está. Com o app fechado, ela só é usada enquanto a detecção estiver ligada, e os relatos são anônimos: ninguém sabe quem fez o relato.</string>
 </resources>
