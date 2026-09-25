@@ -60,6 +60,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -198,6 +200,7 @@ fun RankingScreen(
                                 key = "top",
                                 title = topTitle,
                                 icon = Icons.AutoMirrored.Rounded.TrendingUp,
+                                isGoodSection = uiState.sortBy.isPositive,
                                 cities = uiState.top,
                                 metric = uiState.sortBy,
                                 myCityCode = uiState.myCity?.ibgeCode
@@ -207,6 +210,7 @@ fun RankingScreen(
                                     key = "bottom",
                                     title = bottomTitle,
                                     icon = Icons.AutoMirrored.Rounded.TrendingDown,
+                                    isGoodSection = !uiState.sortBy.isPositive,
                                     cities = uiState.bottom,
                                     metric = uiState.sortBy,
                                     myCityCode = uiState.myCity?.ibgeCode
@@ -390,13 +394,15 @@ private fun MyCityCard(
                             .fillMaxWidth()
                             .padding(top = 16.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(onContainer.copy(alpha = 0.08f))
+                            // Neutral inset so the green/red stat values stay legible on the orange card.
+                            .background(MaterialTheme.colorScheme.surface)
                             .padding(vertical = 12.dp)
                     ) {
                         CityRankingSortBy.entries.forEach { stat ->
                             StatItem(
                                 value = myCity.valueFor(stat),
                                 label = stat.chipLabel(),
+                                tone = stat.toneColor(),
                                 emphasized = stat == metric,
                                 modifier = Modifier.weight(1f)
                             )
@@ -416,19 +422,20 @@ private fun MyCityCard(
 }
 
 @Composable
-private fun StatItem(value: Long, label: String, emphasized: Boolean, modifier: Modifier = Modifier) {
-    val color = MaterialTheme.colorScheme.onPrimaryContainer
+private fun StatItem(value: Long, label: String, tone: Color, emphasized: Boolean, modifier: Modifier = Modifier) {
+    val labelColor = MaterialTheme.colorScheme.onSurface
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             value.toString(),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = if (emphasized) FontWeight.Black else FontWeight.SemiBold,
-            color = if (emphasized) color else color.copy(alpha = 0.7f)
+            color = if (emphasized) tone else tone.copy(alpha = 0.7f)
         )
         Text(
             label,
             style = MaterialTheme.typography.labelSmall,
-            color = if (emphasized) color else color.copy(alpha = 0.7f),
+            fontWeight = if (emphasized) FontWeight.Bold else null,
+            color = if (emphasized) labelColor else labelColor.copy(alpha = 0.7f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -441,6 +448,7 @@ private fun LazyListScope.rankingSection(
     key: String,
     title: String,
     icon: ImageVector,
+    isGoodSection: Boolean,
     cities: List<CityRanking>,
     metric: CityRankingSortBy,
     myCityCode: Int?
@@ -448,7 +456,7 @@ private fun LazyListScope.rankingSection(
     // Bars are relative to the section's largest value, so each section reads on its own scale.
     val maxValue = cities.maxOfOrNull { it.valueFor(metric) } ?: 0L
     item(key = "$key-header") {
-        SectionHeader(title = title, icon = icon)
+        SectionHeader(title = title, icon = icon, isGoodSection = isGoodSection)
     }
     itemsIndexed(cities, key = { _, city -> "$key-${city.ibgeCode}" }) { index, city ->
         CityRankingRow(
@@ -474,12 +482,23 @@ private fun groupedShape(index: Int, count: Int): RoundedCornerShape {
 }
 
 @Composable
-private fun SectionHeader(title: String, icon: ImageVector) {
+private fun SectionHeader(title: String, icon: ImageVector, isGoodSection: Boolean) {
+    // Tone reflects whether being in this list is good news ("Mais corrigidos", "Menos buracos")
+    // or bad news ("Mais buracos", "Menos corrigidos").
+    val tone = rankingTone(positive = isGoodSection)
     Row(
         modifier = Modifier.padding(start = 4.dp, top = 20.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(CircleShape)
+                .background(tone.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = tone, modifier = Modifier.size(18.dp))
+        }
         Text(
             title,
             modifier = Modifier.padding(start = 8.dp),
@@ -499,6 +518,7 @@ private fun CityRankingRow(
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
+    val tone = metric.toneColor()
     val animatedFraction by animateFloatAsState(fraction, label = "rankBar")
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -535,14 +555,14 @@ private fun CityRankingRow(
                         .fillMaxWidth()
                         .height(4.dp)
                         .clip(CircleShape)
-                        .background(colors.onSurfaceVariant.copy(alpha = 0.12f))
+                        .background(tone.copy(alpha = 0.15f))
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(animatedFraction)
                             .height(4.dp)
                             .clip(CircleShape)
-                            .background(colors.primary)
+                            .background(tone)
                     )
                 }
             }
@@ -551,7 +571,8 @@ private fun CityRankingRow(
                 Text(
                     city.valueFor(metric).toString(),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = tone
                 )
                 Text(
                     metric.metricLabel(),
@@ -624,6 +645,22 @@ private fun MessageState(
             action()
         }
     }
+}
+
+/** Fixed potholes are good news; reported potholes and recurrences are bad news. */
+private val CityRankingSortBy.isPositive: Boolean
+    get() = this == CityRankingSortBy.FIXED
+
+@Composable
+private fun CityRankingSortBy.toneColor(): Color = rankingTone(positive = isPositive)
+
+/** Green (tertiary) for good news, red (error) for bad news. The brand green/red are tuned for the
+ * dark theme, so they're darkened on light backgrounds to keep text contrast readable. */
+@Composable
+private fun rankingTone(positive: Boolean): Color {
+    val colors = MaterialTheme.colorScheme
+    val base = if (positive) colors.tertiary else colors.error
+    return if (colors.background.luminance() > 0.5f) lerp(base, Color.Black, 0.3f) else base
 }
 
 private fun CityRanking.valueFor(metric: CityRankingSortBy): Long = when (metric) {
