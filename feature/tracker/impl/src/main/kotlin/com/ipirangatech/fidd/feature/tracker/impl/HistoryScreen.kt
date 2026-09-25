@@ -6,7 +6,9 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -39,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -48,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.ipirangatech.fidd.core.model.Pothole
+import com.ipirangatech.fidd.core.ui.PotholeMarker
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -222,26 +226,33 @@ private fun HistoryItem(
             // week's worth of detections later — tap to open the exact point in Google Maps.
             if (mapsApiKey != null) {
                 val noMapsAppFoundMessage = stringResource(R.string.common_no_maps_app_found)
-                AsyncImage(
-                    model = staticMapUrl(mapsApiKey, pothole.location.latitude, pothole.location.longitude),
-                    contentDescription = stringResource(R.string.history_map_thumbnail_cd),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
-                        .clickable {
-                            val uri = Uri.parse(
-                                "geo:${pothole.location.latitude},${pothole.location.longitude}" +
-                                    "?q=${pothole.location.latitude},${pothole.location.longitude}"
-                            )
-                            try {
-                                context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-                            } catch (e: ActivityNotFoundException) {
-                                Toast.makeText(context, noMapsAppFoundMessage, Toast.LENGTH_SHORT).show()
+                // O ponto do buraco é sempre o centro da imagem (o Crop corta por igual dos dois lados),
+                // então a cratera é sobreposta ali em vez de vir desenhada pelo Static Maps.
+                Box(contentAlignment = Alignment.Center) {
+                    AsyncImage(
+                        model = staticMapUrl(mapsApiKey, pothole.location.latitude, pothole.location.longitude, withMarker = false),
+                        contentDescription = stringResource(R.string.history_map_thumbnail_cd),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
+                            .clickable {
+                                val uri = Uri.parse(
+                                    "geo:${pothole.location.latitude},${pothole.location.longitude}" +
+                                        "?q=${pothole.location.latitude},${pothole.location.longitude}"
+                                )
+                                try {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                                } catch (e: ActivityNotFoundException) {
+                                    Toast.makeText(context, noMapsAppFoundMessage, Toast.LENGTH_SHORT).show()
+                                }
                             }
-                        }
-                )
+                    )
+                    val craterColor = PotholeMarker.severityColor(pothole.severity)
+                    val crater = remember(craterColor) { PotholeMarker.bitmap(context, craterColor).asImageBitmap() }
+                    Image(bitmap = crater, contentDescription = null)
+                }
             }
         }
     }

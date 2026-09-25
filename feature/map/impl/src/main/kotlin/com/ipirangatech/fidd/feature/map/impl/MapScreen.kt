@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -45,6 +46,7 @@ import com.google.maps.android.compose.clustering.rememberClusterManager
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
 import com.ipirangatech.fidd.core.model.GeoBounds
+import com.ipirangatech.fidd.core.ui.PotholeMarker
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import java.util.Date
@@ -110,7 +112,7 @@ fun MapScreen(
                 position = LatLng(pothole.location.latitude, pothole.location.longitude),
                 title = context.getString(R.string.map_marker_own_format, pothole.severity.toString()),
                 snippet = context.getString(R.string.map_marker_detected_at_format, Date(pothole.timestamp).toString()),
-                hue = severityHue(pothole.severity)
+                craterColor = PotholeMarker.severityColor(pothole.severity)
             )
         } + communityPotholes.filter { it.serverId !in ownServerIds }.map { pothole ->
             PotholeMapItem(
@@ -118,8 +120,7 @@ fun MapScreen(
                 position = LatLng(pothole.location.latitude, pothole.location.longitude),
                 title = context.getString(R.string.map_marker_community_format, pothole.status ?: pendingStatusFallback),
                 snippet = context.getString(R.string.map_report_count_format, pothole.distinctReporterCount),
-                // Violet marks these as community-sourced pins, distinct from this device's own detections.
-                hue = BitmapDescriptorFactory.HUE_VIOLET
+                craterColor = PotholeMarker.COLOR_COMMUNITY
             )
         }
     }
@@ -181,25 +182,33 @@ private data class PotholeMapItem(
     override val position: LatLng,
     override val title: String,
     override val snippet: String,
-    val hue: Float
+    val craterColor: Int
 ) : ClusterItem {
     override val zIndex: Float? get() = null
 }
 
-/** The default cluster bubbles, but individual pins keep the severity / community colors. */
+/** The default cluster bubbles, but individual potholes are drawn as craters in their severity /
+ * community color. */
 private class PotholeClusterRenderer(
-    context: Context,
+    private val context: Context,
     map: GoogleMap,
     clusterManager: ClusterManager<PotholeMapItem>
 ) : DefaultClusterRenderer<PotholeMapItem>(context, map, clusterManager) {
+    private val icons = HashMap<Int, BitmapDescriptor>()
+
+    private fun icon(item: PotholeMapItem) = icons.getOrPut(item.craterColor) {
+        BitmapDescriptorFactory.fromBitmap(PotholeMarker.bitmap(context, item.craterColor))
+    }
+
     override fun onBeforeClusterItemRendered(item: PotholeMapItem, markerOptions: MarkerOptions) {
         super.onBeforeClusterItemRendered(item, markerOptions)
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(item.hue))
+        markerOptions.icon(icon(item)).anchor(0.5f, 0.5f)
     }
 
     override fun onClusterItemUpdated(item: PotholeMapItem, marker: com.google.android.gms.maps.model.Marker) {
         super.onClusterItemUpdated(item, marker)
-        marker.setIcon(BitmapDescriptorFactory.defaultMarker(item.hue))
+        marker.setIcon(icon(item))
+        marker.setAnchor(0.5f, 0.5f)
     }
 }
 
@@ -209,9 +218,3 @@ private fun LatLngBounds.toGeoBounds() = GeoBounds(
     maxLatitude = northeast.latitude,
     maxLongitude = northeast.longitude
 )
-
-private fun severityHue(severity: Float): Float = when {
-    severity > 20f -> BitmapDescriptorFactory.HUE_RED
-    severity > 10f -> BitmapDescriptorFactory.HUE_ORANGE
-    else -> BitmapDescriptorFactory.HUE_YELLOW
-}

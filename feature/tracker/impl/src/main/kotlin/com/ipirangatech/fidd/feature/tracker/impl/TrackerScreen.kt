@@ -86,6 +86,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
 import com.ipirangatech.fidd.core.model.LocationPoint
 import com.ipirangatech.fidd.core.model.Pothole
+import com.ipirangatech.fidd.core.ui.PotholeMarker
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -704,6 +705,7 @@ private fun SensorAxisGizmo(x: Float, y: Float, z: Float, modifier: Modifier = M
 
 @Composable
 private fun HomeMap(potholes: List<Pothole>, currentLocation: LocationPoint?) {
+    val context = LocalContext.current
     val youAreHereLabel = stringResource(R.string.tracker_marker_you_are_here)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(SAO_PAULO, 14f)
@@ -738,17 +740,16 @@ private fun HomeMap(potholes: List<Pothole>, currentLocation: LocationPoint?) {
                 )
             }
             potholes.forEach { pothole ->
-                val hue = when {
-                    pothole.severity > 20f -> BitmapDescriptorFactory.HUE_RED
-                    pothole.severity > 10f -> BitmapDescriptorFactory.HUE_ORANGE
-                    else -> BitmapDescriptorFactory.HUE_YELLOW
-                }
+                val craterColor = PotholeMarker.severityColor(pothole.severity)
                 Marker(
                     state = rememberUpdatedMarkerState(
                         position = LatLng(pothole.location.latitude, pothole.location.longitude)
                     ),
                     title = stringResource(R.string.tracker_marker_pothole_severity_format, pothole.severity.toString()),
-                    icon = BitmapDescriptorFactory.defaultMarker(hue)
+                    icon = remember(craterColor) {
+                        BitmapDescriptorFactory.fromBitmap(PotholeMarker.bitmap(context, craterColor))
+                    },
+                    anchor = Offset(0.5f, 0.5f)
                 )
             }
         }

@@ -13,7 +13,16 @@ internal fun getMapsApiKey(context: Context): String? = try {
     null
 }
 
-internal fun staticMapUrl(apiKey: String, latitude: Double, longitude: Double, zoom: Int = 17): String =
+/** [withMarker] = false leaves the point unmarked (it's always the image center), for callers that
+ * overlay their own marker — the Static Maps API only takes custom icons from a public URL. */
+internal fun staticMapUrl(
+    apiKey: String,
+    latitude: Double,
+    longitude: Double,
+    zoom: Int = 17,
+    withMarker: Boolean = true
+): String =
     "https://maps.googleapis.com/maps/api/staticmap" +
         "?center=$latitude,$longitude&zoom=$zoom&size=400x160&scale=2" +
-        "&markers=color:red%7C$latitude,$longitude&key=$apiKey"
+        (if (withMarker) "&markers=color:red%7C$latitude,$longitude" else "") +
+        "&key=$apiKey"
