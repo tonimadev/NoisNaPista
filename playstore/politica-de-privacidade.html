@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de Privacidade · FIDD</title>
+  <meta name="description" content="Como o FIDD (Ferramenta Inteligente de Detecção de Danos) trata a localização e os dados de sensores. / How FIDD handles location and sensor data.">
+  <meta name="theme-color" content="#FF9800">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='18 18 72 72'%3E%3CclipPath id='r'%3E%3Crect x='18' y='18' width='72' height='72' rx='16'/%3E%3C/clipPath%3E%3Cg clip-path='url(%23r)'%3E%3Crect x='18' y='18' width='72' height='72' fill='%23FF9800'/%3E%3Cpath fill='%231E1E1E' d='M24,108L50,30L58,30L84,108Z'/%3E%3Cpath fill='%23C66900' d='M42,71.5C44,67 64,66 67,72C63,69.6 49,69 42,71.5Z'/%3E%3C/g%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #FFFBF5; --surface: #FFFFFF; --border: #EFE2CF; --text: #1E1E1E; --muted: #6B5A45;
+      --accent: #C66900; --accent-soft: #FFE0B2; --brand: #FF9800;
+      --radius: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #121212; --surface: #1E1E1E; --border: #33302B; --text: #ECE7E1; --muted: #B3A897;
+        --accent: #FFB74D; --accent-soft: #3A2A12;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #121212; --surface: #1E1E1E; --border: #33302B; --text: #ECE7E1; --muted: #B3A897;
+      --accent: #FFB74D; --accent-soft: #3A2A12;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 17px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+    }
+    a { color: var(--accent); }
+    .topbar { background: var(--brand); color: #1E1E1E; }
+    .wrap { max-width: 780px; margin: 0 auto; padding: 0 16px; }
+    .topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.3rem; letter-spacing: .02em; }
+    .brand svg { width: 36px; height: 36px; border-radius: 9px; box-shadow: 0 0 0 2px #1E1E1E; }
+    .lang { display: flex; gap: 4px; background: rgba(0,0,0,.12); border-radius: 999px; padding: 3px; }
+    .lang a { color: #1E1E1E; text-decoration: none; font-weight: 700; font-size: .85rem; padding: 4px 12px; border-radius: 999px; }
+    .lang a.on { background: #1E1E1E; color: #FFB74D; }
+    main { padding: 32px 0 56px; }
+    .eyebrow { color: var(--accent); text-transform: uppercase; font-weight: 700; font-size: .8rem; letter-spacing: .08em; margin: 0; }
+    h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.15; margin: .25em 0 .2em; }
+    h2 { font-size: 1.3rem; margin: 2.2em 0 .5em; scroll-margin-top: 16px; }
+    h3 { font-size: 1.05rem; margin: 1.5em 0 .3em; }
+    p { margin: 0 0 1em; }
+    ul { padding-left: 1.2em; margin: 0 0 1em; }
+    li { margin-bottom: .4em; }
+    .updated { color: var(--muted); font-size: .95rem; }
+    .summary { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); margin: 28px 0 8px; }
+    .summary div, .toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+    .summary strong { display: block; margin-bottom: 4px; }
+    .summary p { margin: 0; color: var(--muted); font-size: .95rem; }
+    .toc { margin-top: 24px; }
+    .toc ol { margin: 0; padding-left: 1.3em; columns: 2 220px; column-gap: 32px; }
+    .toc li { break-inside: avoid; margin-bottom: .25em; }
+    .table-scroll { overflow-x: auto; margin: 0 0 1em; }
+    table { width: 100%; border-collapse: collapse; font-size: .95rem; min-width: 480px; }
+    th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; }
+    footer { border-top: 1px solid var(--border); color: var(--muted); font-size: .9rem; padding: 20px 0 32px; }
+
+    /* Language switch without JavaScript: #en shows the English version. */
+    #en { display: none; }
+    #en:target, #en:has(:target) { display: block; }
+    #en:target ~ #pt, #en:has(:target) ~ #pt { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- ========================= ENGLISH ========================= -->
+<div id="en" lang="en">
+  <header class="topbar">
+    <div class="wrap">
+      <span class="brand"><svg viewBox="18 18 72 72" aria-hidden="true"><rect x="18" y="18" width="72" height="72" fill="#FF9800"/><path fill="#1E1E1E" d="M24,108L50,30L58,30L84,108Z"/><path fill="#FFE0B2" d="M53.5,34L54.5,34L54.7,39L53.3,39Z M53.1,43L54.9,43L55.2,49L52.8,49Z M52.6,53L55.4,53L55.7,59L52.3,59Z M51.6,82L56.4,82L57,96L51,96Z"/><path fill="#FF9800" d="M42,71.5C41.5,68.5 45,66.8 48.5,66.6C50.5,65.6 53,66.3 55,65.9C58.5,65.6 62.5,66.2 64.8,67.6C67,68.8 66.6,70.6 67,72C67.3,74.5 64.5,76.3 61,76.9C58.5,77.7 55.5,77.2 53,77.6C49.5,77.9 45.5,77 43.6,75.4C42.4,74.4 42.2,72.8 42,71.5Z"/><path fill="#C66900" d="M42,71.5C41.5,68.5 45,66.8 48.5,66.6C50.5,65.6 53,66.3 55,65.9C58.5,65.6 62.5,66.2 64.8,67.6C67,68.8 66.6,70.6 67,72C63,69.6 58.5,69 54,69.1C49,69.1 44.5,69.8 42,71.5Z"/></svg>FIDD</span>
+      <nav class="lang" aria-label="Language"><a href="#pt" hreflang="pt-BR">PT</a><a href="#en" class="on" hreflang="en" aria-current="true">EN</a></nav>
+    </div>
+  </header>
+  <main>
+    <article class="wrap">
+      <p class="eyebrow">Privacy</p>
+      <h1>FIDD Privacy Policy</h1>
+      <p class="updated">Last updated: September 25, 2026</p>
+      <p>
+        FIDD (Ferramenta Inteligente de Detecção de Danos, “Intelligent Damage Detection Tool”) is an Android app
+        that uses the sensors in a driver's phone to detect potholes automatically and build a collaborative,
+        anonymous map of road conditions. This policy explains what data the app and the website
+        <a href="https://fidd.com.br">fidd.com.br</a> handle, why, and what choices you have. It follows Brazil's
+        General Data Protection Law (Law No. 13,709/2018, “LGPD”).
+      </p>
+
+      <div class="summary" role="list">
+        <div role="listitem"><strong>No account, no login</strong><p>We never ask for your name, email, phone number or any sign-up.</p></div>
+        <div role="listitem"><strong>Location marks the pothole</strong><p>Only the spot of each detected pothole is sent, never your route.</p></div>
+        <div role="listitem"><strong>Anonymous on the map</strong><p>The public map shows where the problem is, never who reported it.</p></div>
+        <div role="listitem"><strong>We don't sell data</strong><p>Your data is never sold or used to identify you.</p></div>
+      </div>
+
+      <nav class="toc" aria-label="On this page">
+        <ol>
+          <li><a href="#en-responsible">Who is responsible</a></li>
+          <li><a href="#en-data">Data we handle</a></li>
+          <li><a href="#en-not-collected">What we don't collect</a></li>
+          <li><a href="#en-device">What stays on your phone</a></li>
+          <li><a href="#en-purposes">Purposes and legal basis</a></li>
+          <li><a href="#en-sharing">Sharing</a></li>
+          <li><a href="#en-retention">Retention</a></li>
+          <li><a href="#en-control">Your control over your data</a></li>
+          <li><a href="#en-rights">Your rights</a></li>
+          <li><a href="#en-security">Security</a></li>
+          <li><a href="#en-children">Children</a></li>
+          <li><a href="#en-changes">Changes to this policy</a></li>
+          <li><a href="#en-contact">Contact</a></li>
+        </ol>
+      </nav>
+
+      <h2 id="en-responsible">1. Who is responsible</h2>
+      <p>
+        FIDD is developed and maintained by <strong>Ipiranga Tech</strong>, the controller of the data handled by the
+        app and the website. For any privacy matter, use the contact in <a href="#en-contact">section 13</a>.
+      </p>
+
+      <h2 id="en-data">2. Data we handle</h2>
+      <h3>Location</h3>
+      <p>
+        FIDD asks for precise location access because it needs to know exactly where a pothole was detected.
+        Location is read only while <strong>detection is turned on</strong>. During that time Android shows a
+        persistent notification, and you can pause detection at any moment from the app or from the notification
+        itself. While detection is paused, the app does not track your location.
+      </p>
+      <p>Location is also used, when you ask, to center the map on you and to show your city on the ranking screen.</p>
+
+      <h3>Motion sensors</h3>
+      <p>
+        The accelerometer, gyroscope and gravity sensor are read during detection to recognize the jolt of a
+        pothole. This analysis happens <strong>entirely on the phone</strong>: raw sensor readings are not sent to
+        our servers.
+      </p>
+
+      <h3>Pothole reports sent to the server</h3>
+      <p>When a pothole is detected, the app sends the following to the FIDD server:</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Data</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>Latitude and longitude of the pothole</td><td>Pin the pothole on the map and group reports of the same spot.</td></tr>
+            <tr><td>Impact intensity</td><td>Estimate how severe the pothole is.</td></tr>
+            <tr><td>Date and time of detection</td><td>Order reports and identify potholes that come back.</td></tr>
+            <tr><td>Random report identifier</td><td>Avoid counting the same report twice when a submission is retried.</td></tr>
+            <tr><td>Anonymous device token (see below)</td><td>Count how many different people confirmed a pothole and let only you delete your own reports.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>When you vote that a pothole has been fixed, the server records the vote with the anonymous token so each device votes only once per pothole.</p>
+
+      <h3>Anonymous device token</h3>
+      <p>
+        The first time the app sends a report, it generates a random code and stores it on the phone. This code is
+        not derived from any of your data or your device's (it is not the IMEI, phone number, Google account or
+        advertising ID). The server <strong>does not store the original code</strong>: it keeps only an irreversible
+        cryptographic digest (SHA-256 hash with a server-side secret), which recognizes reports from the same device
+        without knowing whose device it is.
+      </p>
+
+      <h3>Map and ranking queries</h3>
+      <p>
+        To load potholes, the app sends the server the map area on screen or, for the list of nearby potholes and
+        your city on the ranking, your current position. This data is used only to answer the query and is not stored.
+      </p>
+
+      <h3>Technical connection data</h3>
+      <p>
+        As with any internet service, the server receives the IP address of each connection. The IP address is kept
+        in memory for a few minutes to rate-limit requests and protect the service from abuse, and it may appear in
+        the server's technical logs, which are size-limited and overwritten automatically. The IP address is not
+        linked to pothole reports.
+      </p>
+
+      <h2 id="en-not-collected">3. What we don't collect</h2>
+      <ul>
+        <li>Name, email, phone number, tax ID or any sign-up data: the app has no accounts.</li>
+        <li>Your route or movement history: only the spots of detected potholes leave the phone.</li>
+        <li>Contacts, photos, files, microphone or camera.</li>
+        <li>Advertising ID or advertising data: the current version shows no ads (see “Ads” in section 6).</li>
+        <li>Usage analytics: the current version uses no analytics tools (see “Usage analytics” in section 6).</li>
+      </ul>
+
+      <h2 id="en-device">4. What stays on your phone</h2>
+      <p>The app stores the following in its private storage:</p>
+      <ul>
+        <li>the history of potholes you detected (location, time, intensity and upload status);</li>
+        <li>short snippets of sensor readings around each detection, used to improve detection, which only leave the phone if you export them yourself;</li>
+        <li>the last location used to show your city on the ranking, so the app doesn't need GPS every time you open that screen;</li>
+        <li>the anonymous token described above and your app preferences.</li>
+      </ul>
+      <p>
+        If Android backup is enabled on your device, this data may be included in the backup Android makes to your
+        Google account, according to your settings and Google's privacy policy. Uninstalling the app or clearing its
+        data in Android settings erases everything stored locally.
+      </p>
+
+      <h2 id="en-purposes">5. Purposes and legal basis</h2>
+      <p>We use the data above exclusively to:</p>
+      <ul>
+        <li>detect potholes and publish them on the collaborative map;</li>
+        <li>confirm potholes reported by different people and record when they are fixed;</li>
+        <li>compute the city ranking by potholes, repairs and recurrences;</li>
+        <li>keep the service running, secure and protected against abuse;</li>
+        <li>once usage analytics is in place, understand in aggregate how the app is used in order to improve it.</li>
+      </ul>
+      <p>
+        Processing is based on the legitimate interest of offering a public, collaborative map of road conditions
+        (LGPD, art. 7, IX), limited to the minimum necessary and anonymized whenever possible. Access to location and
+        notifications depends on your permission in Android settings, which you can revoke at any time.
+      </p>
+
+      <h2 id="en-sharing">6. Sharing</h2>
+      <p>
+        <strong>We do not sell or rent data.</strong> Pothole information (location, severity, status and number of
+        reports) is public and can be seen by anyone in the app and on the website, but it never identifies who
+        reported it. Aggregated, anonymous data such as the city ranking may be freely published, including to
+        public authorities.
+      </p>
+      <p>We also rely on third-party services for the app to work:</p>
+      <ul>
+        <li><strong>Google Maps SDK and Google Play services</strong>: display the map in the app and provide the device's
+          location. Google may receive technical data such as the map region shown and device information, under the
+          <a href="https://policies.google.com/privacy" rel="noopener">Google Privacy Policy</a>.</li>
+        <li><strong>Hosting provider</strong>: the FIDD server runs on cloud infrastructure in Brazil, which stores the data on our behalf.</li>
+        <li><strong>OpenStreetMap</strong>: provides the maps shown on the fidd.com.br website. Your browser downloads map images directly from that service.</li>
+      </ul>
+      <h3>Usage analytics</h3>
+      <p>
+        The current version of FIDD uses no analytics tools. We plan to add an analytics tool (such as Google
+        Analytics for Firebase) to understand, anonymously, how the app is used: which screens are opened, which
+        features are used and where people get stuck, so we can improve the app. These statistics will not include your
+        name, contact details or route, and will be used in aggregate, never to identify you. Before this starts,
+        this policy will be updated to name the tool, list exactly what it collects (such as events in the app, app
+        version, device model and approximate region) and explain how to opt out.
+      </p>
+      <h3>Ads</h3>
+      <p>
+        The current version of FIDD shows no ads. We may start showing ads in the future through an advertising
+        network such as Google AdMob. Before that happens, this policy will be updated to explain what data the ad
+        network receives (for example, the device's advertising ID and technical device information), what it is used
+        for, and how you can limit ad personalization in Android settings.
+      </p>
+      <p>
+        We may disclose data if required by law or court order. Since we hold no personally identifying data, what
+        exists to disclose are the anonymous reports described in this policy.
+      </p>
+
+      <h2 id="en-retention">7. Retention</h2>
+      <ul>
+        <li><strong>Pothole reports and fix votes</strong>: kept while useful for the map and the ranking history, including after the repair, to identify potholes that reappear in the same place.</li>
+        <li><strong>Location sent in queries</strong>: not stored.</li>
+        <li><strong>IP address</strong>: kept in memory for a few minutes; technical logs are size-limited and overwritten automatically.</li>
+        <li><strong>Data on your phone</strong>: until you delete it, clear the app's data or uninstall it.</li>
+      </ul>
+
+      <h2 id="en-control">8. Your control over your data</h2>
+      <ul>
+        <li><strong>Pause detection</strong> at any time: nothing is detected or sent while it is paused.</li>
+        <li><strong>Delete a report</strong> from the app's history: it is removed from the phone and the app asks the server to remove it as well.</li>
+        <li><strong>Revoke permissions</strong> for location and notifications in Android settings.</li>
+        <li><strong>Uninstalling the app</strong> erases local data, including the anonymous token. After that, old reports can no
+          longer be linked to you, not even to delete them through the app, because the server only knows the token's irreversible digest.</li>
+      </ul>
+
+      <h2 id="en-rights">9. Your rights</h2>
+      <p>
+        The LGPD grants you, among others, the right to confirm whether we process your data, access it, correct it,
+        request its deletion, obtain information about sharing and object to processing (art. 18). Because FIDD does
+        not collect identifying data, we generally cannot tell which reports are yours. To exercise any of these
+        rights, contact us at the address below and we will help as far as possible. You may also file a complaint
+        with Brazil's National Data Protection Authority (<a href="https://www.gov.br/anpd" rel="noopener">ANPD</a>).
+      </p>
+
+      <h2 id="en-security">10. Security</h2>
+      <p>
+        All communication between the app and the server is encrypted (HTTPS). The device token is stored on the
+        server only as an irreversible hash, and the service has request limits and automatic checks against fake or
+        abusive reports. No system is completely immune to failures, but we keep as little data as possible precisely
+        to reduce the impact of any incident.
+      </p>
+
+      <h2 id="en-children">11. Children</h2>
+      <p>FIDD is intended for drivers and is not directed at children. We do not knowingly collect data from children or adolescents.</p>
+
+      <h2 id="en-changes">12. Changes to this policy</h2>
+      <p>
+        We may update this policy when the app changes. The date at the top shows the current version. If a change
+        materially alters what we collect, we will let you know in the app before it takes effect.
+      </p>
+
+      <h2 id="en-contact">13. Contact</h2>
+      <p>Questions, requests or complaints about privacy: <a href="mailto:contato@fidd.com.br">contato@fidd.com.br</a>.</p>
+    </article>
+  </main>
+  <footer><div class="wrap">FIDD · Intelligent Damage Detection Tool · Ipiranga Tech</div></footer>
+</div>
+
+<!-- ========================= PORTUGUÊS (padrão) ========================= -->
+<div id="pt">
+  <header class="topbar">
+    <div class="wrap">
+      <span class="brand"><svg viewBox="18 18 72 72" aria-hidden="true"><rect x="18" y="18" width="72" height="72" fill="#FF9800"/><path fill="#1E1E1E" d="M24,108L50,30L58,30L84,108Z"/><path fill="#FFE0B2" d="M53.5,34L54.5,34L54.7,39L53.3,39Z M53.1,43L54.9,43L55.2,49L52.8,49Z M52.6,53L55.4,53L55.7,59L52.3,59Z M51.6,82L56.4,82L57,96L51,96Z"/><path fill="#FF9800" d="M42,71.5C41.5,68.5 45,66.8 48.5,66.6C50.5,65.6 53,66.3 55,65.9C58.5,65.6 62.5,66.2 64.8,67.6C67,68.8 66.6,70.6 67,72C67.3,74.5 64.5,76.3 61,76.9C58.5,77.7 55.5,77.2 53,77.6C49.5,77.9 45.5,77 43.6,75.4C42.4,74.4 42.2,72.8 42,71.5Z"/><path fill="#C66900" d="M42,71.5C41.5,68.5 45,66.8 48.5,66.6C50.5,65.6 53,66.3 55,65.9C58.5,65.6 62.5,66.2 64.8,67.6C67,68.8 66.6,70.6 67,72C63,69.6 58.5,69 54,69.1C49,69.1 44.5,69.8 42,71.5Z"/></svg>FIDD</span>
+      <nav class="lang" aria-label="Idioma"><a href="#pt" class="on" hreflang="pt-BR" aria-current="true">PT</a><a href="#en" hreflang="en">EN</a></nav>
+    </div>
+  </header>
+  <main>
+    <article class="wrap">
+      <p class="eyebrow">Privacidade</p>
+      <h1>Política de Privacidade do FIDD</h1>
+      <p class="updated">Última atualização: 25 de setembro de 2026</p>
+      <p>
+        O FIDD (Ferramenta Inteligente de Detecção de Danos) é um aplicativo Android que usa os sensores do celular
+        de quem dirige para detectar buracos automaticamente e montar um mapa colaborativo e anônimo das vias. Esta
+        política explica quais dados o aplicativo e o site <a href="https://fidd.com.br">fidd.com.br</a> tratam, para
+        quê, e quais escolhas você tem. Ela segue a Lei Geral de Proteção de Dados (Lei nº 13.709/2018, LGPD).
+      </p>
+
+      <div class="summary" role="list">
+        <div role="listitem"><strong>Sem conta, sem login</strong><p>Não pedimos nome, e-mail, telefone nem qualquer cadastro.</p></div>
+        <div role="listitem"><strong>A localização marca o buraco</strong><p>Enviamos só o ponto de cada buraco detectado, nunca o seu trajeto.</p></div>
+        <div role="listitem"><strong>Anônimo no mapa</strong><p>O mapa público mostra onde está o problema, nunca quem fez o relato.</p></div>
+        <div role="listitem"><strong>Não vendemos dados</strong><p>Seus dados nunca são vendidos nem usados para identificar você.</p></div>
+      </div>
+
+      <nav class="toc" aria-label="Nesta página">
+        <ol>
+          <li><a href="#responsavel">Quem é o responsável</a></li>
+          <li><a href="#coletados">Dados que tratamos</a></li>
+          <li><a href="#nao-coletados">O que não coletamos</a></li>
+          <li><a href="#aparelho">O que fica só no seu celular</a></li>
+          <li><a href="#finalidades">Finalidades e base legal</a></li>
+          <li><a href="#compartilhamento">Compartilhamento</a></li>
+          <li><a href="#retencao">Por quanto tempo guardamos</a></li>
+          <li><a href="#controle">Seu controle sobre os dados</a></li>
+          <li><a href="#direitos">Seus direitos</a></li>
+          <li><a href="#seguranca">Segurança</a></li>
+          <li><a href="#criancas">Crianças e adolescentes</a></li>
+          <li><a href="#alteracoes">Alterações nesta política</a></li>
+          <li><a href="#contato">Contato</a></li>
+        </ol>
+      </nav>
+
+      <h2 id="responsavel">1. Quem é o responsável</h2>
+      <p>
+        O FIDD é desenvolvido e mantido pela <strong>Ipiranga Tech</strong>, que é a controladora dos dados tratados
+        pelo aplicativo e pelo site. Para qualquer assunto sobre privacidade, use o contato indicado na
+        <a href="#contato">seção 13</a>.
+      </p>
+
+      <h2 id="coletados">2. Dados que tratamos</h2>
+      <h3>Localização</h3>
+      <p>
+        O FIDD pede acesso à localização precisa do aparelho porque precisa saber exatamente onde um buraco foi
+        detectado. A localização só é lida enquanto a <strong>detecção está ativada</strong>. Nesse período o Android
+        mostra uma notificação permanente, e você pode pausar a detecção a qualquer momento pelo app ou pela própria
+        notificação. Com a detecção pausada, o app não acompanha a sua localização.
+      </p>
+      <p>A localização também é usada, quando você pede, para centralizar o mapa em você e para mostrar a sua cidade na tela de ranking.</p>
+
+      <h3>Sensores de movimento</h3>
+      <p>
+        O acelerômetro, o giroscópio e o sensor de gravidade são lidos durante a detecção para reconhecer o solavanco
+        de um buraco. Essa análise acontece <strong>inteiramente no celular</strong>: as leituras brutas dos sensores
+        não são enviadas aos nossos servidores.
+      </p>
+
+      <h3>Relatos de buracos enviados ao servidor</h3>
+      <p>Quando um buraco é detectado, o app envia ao servidor do FIDD:</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Dado</th><th>Para quê</th></tr></thead>
+          <tbody>
+            <tr><td>Latitude e longitude do buraco</td><td>Marcar o buraco no mapa e agrupar relatos do mesmo ponto.</td></tr>
+            <tr><td>Intensidade do impacto</td><td>Estimar a gravidade do buraco.</td></tr>
+            <tr><td>Data e hora da detecção</td><td>Ordenar relatos e identificar buracos que reaparecem.</td></tr>
+            <tr><td>Identificador aleatório do relato</td><td>Evitar que o mesmo relato seja contado duas vezes quando o envio é repetido.</td></tr>
+            <tr><td>Token anônimo do aparelho (ver abaixo)</td><td>Contar quantas pessoas diferentes confirmaram um buraco e permitir que só você exclua os seus relatos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Quando você vota que um buraco foi consertado, o servidor registra o voto junto com o token anônimo, para que cada aparelho vote só uma vez por buraco.</p>
+
+      <h3>Token anônimo do aparelho</h3>
+      <p>
+        Na primeira vez que o app envia um relato, ele gera um código aleatório e o guarda no celular. Esse código não
+        é derivado de nenhum dado seu ou do aparelho (não é IMEI, número de telefone, conta Google nem ID de
+        publicidade). O servidor <strong>não guarda o código original</strong>: ele armazena apenas um resumo
+        criptográfico irreversível (hash SHA-256 com um segredo do servidor), que serve para reconhecer relatos vindos
+        do mesmo aparelho sem saber de quem é.
+      </p>
+
+      <h3>Consultas ao mapa e ao ranking</h3>
+      <p>
+        Para carregar os buracos, o app envia ao servidor a área do mapa que está na tela ou, no caso da lista de
+        buracos próximos e da sua cidade no ranking, a sua posição atual. Esses dados servem só para responder à
+        consulta e não são armazenados.
+      </p>
+
+      <h3>Dados técnicos de conexão</h3>
+      <p>
+        Como em qualquer serviço na internet, o servidor recebe o endereço IP de cada conexão. O IP é usado em memória,
+        por poucos minutos, para limitar o excesso de requisições e proteger o serviço contra abuso, e pode aparecer em
+        registros técnicos do servidor, que são mantidos em volume limitado e sobrescritos automaticamente. O IP não é
+        associado aos relatos de buracos.
+      </p>
+
+      <h2 id="nao-coletados">3. O que não coletamos</h2>
+      <ul>
+        <li>Nome, e-mail, telefone, CPF ou qualquer dado de cadastro: o app não tem contas.</li>
+        <li>O seu trajeto ou histórico de deslocamentos: só os pontos dos buracos detectados saem do celular.</li>
+        <li>Contatos, fotos, arquivos, microfone ou câmera.</li>
+        <li>Identificador de publicidade ou dados para anúncios: a versão atual não exibe anúncios (veja “Anúncios” na seção 6).</li>
+        <li>Estatísticas de uso: a versão atual não usa ferramentas de analytics (veja “Estatísticas de uso” na seção 6).</li>
+      </ul>
+
+      <h2 id="aparelho">4. O que fica só no seu celular</h2>
+      <p>O app guarda localmente, no armazenamento privado dele:</p>
+      <ul>
+        <li>o histórico dos buracos que você detectou (local, horário, intensidade e situação de envio);</li>
+        <li>pequenos trechos das leituras de sensor em torno de cada detecção, usados para melhorar a detecção, que só saem do celular se você mesmo os exportar;</li>
+        <li>a última localização usada para mostrar a sua cidade no ranking, para não precisar pedir o GPS toda vez que você abre a tela;</li>
+        <li>o token anônimo descrito acima e as suas preferências do app.</li>
+      </ul>
+      <p>
+        Se o backup do Android estiver ativado no seu aparelho, esses dados podem ser incluídos no backup que o Android
+        faz na sua conta Google, conforme as configurações e a política de privacidade do Google. Desinstalar o app ou
+        limpar os dados dele pelas configurações do Android apaga tudo o que está armazenado localmente.
+      </p>
+
+      <h2 id="finalidades">5. Finalidades e base legal</h2>
+      <p>Usamos os dados descritos acima exclusivamente para:</p>
+      <ul>
+        <li>detectar buracos e publicá-los no mapa colaborativo;</li>
+        <li>confirmar buracos relatados por pessoas diferentes e registrar quando foram consertados;</li>
+        <li>calcular o ranking de cidades por buracos, consertos e reincidências;</li>
+        <li>manter o serviço funcionando, seguro e protegido contra abuso;</li>
+        <li>quando as estatísticas de uso forem incluídas, entender de forma agregada como o app é usado para melhorá-lo.</li>
+      </ul>
+      <p>
+        O tratamento se baseia no legítimo interesse de oferecer um mapa público e colaborativo das condições das vias
+        (art. 7º, IX, da LGPD), limitado ao mínimo necessário e com dados anonimizados sempre que possível. O acesso à
+        localização e às notificações depende da sua autorização nas permissões do Android, que você pode revogar a
+        qualquer momento.
+      </p>
+
+      <h2 id="compartilhamento">6. Compartilhamento</h2>
+      <p>
+        <strong>Não vendemos nem alugamos dados.</strong> As informações de cada buraco (localização, gravidade,
+        situação e número de relatos) são públicas e podem ser vistas por qualquer pessoa no app e no site, mas nunca
+        identificam quem fez o relato. Dados agregados e anônimos, como o ranking de cidades, podem ser divulgados
+        livremente, inclusive para órgãos públicos.
+      </p>
+      <p>Também usamos serviços de terceiros para o app funcionar:</p>
+      <ul>
+        <li><strong>Google Maps SDK e Google Play Services</strong>: exibem o mapa no app e fornecem a localização do
+          aparelho. O Google pode receber dados técnicos como a região do mapa exibida e informações do dispositivo,
+          conforme a <a href="https://policies.google.com/privacy" rel="noopener">Política de Privacidade do Google</a>.</li>
+        <li><strong>Provedor de hospedagem</strong>: o servidor do FIDD roda em infraestrutura de nuvem no Brasil, que armazena os dados em nosso nome.</li>
+        <li><strong>OpenStreetMap</strong>: fornece os mapas exibidos no site fidd.com.br. O seu navegador baixa as imagens do mapa diretamente desse serviço.</li>
+      </ul>
+      <h3>Estatísticas de uso</h3>
+      <p>
+        A versão atual do FIDD não usa ferramentas de analytics. Pretendemos incluir uma ferramenta de analytics
+        (como o Google Analytics para Firebase) para entender, de forma anônima, como o app é usado: quais telas são
+        abertas, quais recursos são usados e onde as pessoas têm dificuldade, para melhorar o app. Essas estatísticas
+        não incluirão seu nome, seus contatos nem o seu trajeto, e serão usadas de forma agregada, nunca para
+        identificar você. Antes disso, esta política será atualizada com o nome da ferramenta, exatamente o que ela
+        coleta (como eventos no app, versão do app, modelo do aparelho e região aproximada) e como desativar.
+      </p>
+      <h3>Anúncios</h3>
+      <p>
+        A versão atual do FIDD não exibe anúncios. Poderemos passar a exibir anúncios no futuro, por meio de uma rede
+        de publicidade como o Google AdMob. Antes disso, esta política será atualizada para informar quais dados a rede
+        de anúncios recebe (por exemplo, o identificador de publicidade do aparelho e dados técnicos do dispositivo),
+        para quê, e como você pode limitar a personalização dos anúncios nas configurações do Android.
+      </p>
+      <p>
+        Poderemos fornecer dados se formos obrigados por lei ou por ordem judicial. Como não temos dados pessoais de
+        identificação, o que existe para fornecer são os relatos anônimos descritos nesta política.
+      </p>
+
+      <h2 id="retencao">7. Por quanto tempo guardamos</h2>
+      <ul>
+        <li><strong>Relatos de buracos e votos de conserto</strong>: mantidos enquanto forem úteis para o mapa e para o histórico do ranking, inclusive depois do conserto, para identificar buracos que reaparecem no mesmo lugar.</li>
+        <li><strong>Localização enviada em consultas</strong>: não é armazenada.</li>
+        <li><strong>Endereço IP</strong>: usado em memória por poucos minutos; registros técnicos têm tamanho limitado e são sobrescritos automaticamente.</li>
+        <li><strong>Dados no celular</strong>: até você excluí-los, limpar os dados do app ou desinstalá-lo.</li>
+      </ul>
+
+      <h2 id="controle">8. Seu controle sobre os dados</h2>
+      <ul>
+        <li><strong>Pausar a detecção</strong> a qualquer momento: nada é detectado nem enviado enquanto ela estiver pausada.</li>
+        <li><strong>Excluir um relato</strong> pelo histórico do app: ele é apagado do celular e o app pede ao servidor que também o remova.</li>
+        <li><strong>Revogar permissões</strong> de localização e notificações nas configurações do Android.</li>
+        <li><strong>Desinstalar o app</strong> apaga os dados locais, inclusive o token anônimo. Depois disso não há mais como
+          associar os relatos antigos a você, nem para excluí-los pelo app, porque o servidor só conhece o resumo irreversível do token.</li>
+      </ul>
+
+      <h2 id="direitos">9. Seus direitos</h2>
+      <p>
+        A LGPD garante a você, entre outros, o direito de confirmar se tratamos dados seus, acessá-los, corrigi-los,
+        pedir sua eliminação, obter informações sobre compartilhamento e se opor ao tratamento (art. 18). Como o FIDD
+        não coleta dados de identificação, em geral não conseguimos saber quais relatos são seus. Se quiser exercer
+        algum desses direitos, fale conosco pelo contato abaixo e ajudaremos no que for possível. Você também pode
+        apresentar reclamação à Autoridade Nacional de Proteção de Dados (<a href="https://www.gov.br/anpd" rel="noopener">ANPD</a>).
+      </p>
+
+      <h2 id="seguranca">10. Segurança</h2>
+      <p>
+        Toda a comunicação entre o app e o servidor é criptografada (HTTPS). O token do aparelho é guardado no servidor
+        apenas como hash irreversível, e o serviço tem limites de requisições e verificações automáticas contra relatos
+        falsos ou abusivos. Nenhum sistema é totalmente imune a falhas, mas trabalhamos para guardar o mínimo de dados
+        possível, justamente para reduzir o impacto de qualquer incidente.
+      </p>
+
+      <h2 id="criancas">11. Crianças e adolescentes</h2>
+      <p>O FIDD é voltado a quem dirige e não é direcionado a crianças. Não coletamos intencionalmente dados de crianças ou adolescentes.</p>
+
+      <h2 id="alteracoes">12. Alterações nesta política</h2>
+      <p>
+        Podemos atualizar esta política quando o app mudar. A data no topo indica a versão atual. Se uma mudança
+        alterar de forma relevante o que coletamos, avisaremos no próprio app antes que ela passe a valer.
+      </p>
+
+      <h2 id="contato">13. Contato</h2>
+      <p>Dúvidas, pedidos ou reclamações sobre privacidade: <a href="mailto:contato@fidd.com.br">contato@fidd.com.br</a>.</p>
+    </article>
+  </main>
+  <footer><div class="wrap">FIDD · Ferramenta Inteligente de Detecção de Danos · Ipiranga Tech</div></footer>
+</div>
+
+</body>
+</html>
