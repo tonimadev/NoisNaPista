@@ -3,7 +3,9 @@ package com.ipirangatech.fidd.ads
 import android.app.Activity
 import app.cash.turbine.test
 import com.ipirangatech.fidd.R
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
 import com.ipirangatech.fidd.core.sensor.tracking.PotholeDetector
+import com.ipirangatech.fidd.core.testing.FakeAnalyticsTracker
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakeMotionSensor
 import com.ipirangatech.fidd.core.testing.FakeRemoveAdsRepository
@@ -27,11 +29,12 @@ class AdsViewModelTest {
     private val repository = FakeRemoveAdsRepository(adsRemoved = false)
     private val detector = PotholeDetector(FakeMotionSensor(), FakeLocationProvider())
     private val activity: Activity = mockk()
+    private val analytics = FakeAnalyticsTracker()
 
     @After
     fun tearDown() = detector.stopDetection()
 
-    private fun viewModel() = AdsViewModel(repository, detector)
+    private fun viewModel() = AdsViewModel(repository, detector, analytics)
 
     @Test
     fun `connects to billing on creation`() {
@@ -87,6 +90,7 @@ class AdsViewModelTest {
                 repository.adsRemoved.value = true
                 assertEquals(AdsUiEffect.ShowMessage(R.string.ads_purchase_thanks), awaitItem())
             }
+            assertEquals(listOf(AnalyticsEvent.RemoveAdsClicked, AnalyticsEvent.RemoveAdsPurchased), analytics.events)
         }
 
     @Test
@@ -97,6 +101,7 @@ class AdsViewModelTest {
                 repository.adsRemoved.value = true
                 expectNoEvents()
             }
+            assertTrue(analytics.events.isEmpty())
         }
 
     @Test
@@ -107,5 +112,6 @@ class AdsViewModelTest {
                 repository.purchaseFailures.emit(Unit)
                 assertEquals(AdsUiEffect.ShowMessage(R.string.ads_purchase_failed), awaitItem())
             }
+            assertEquals(listOf(AnalyticsEvent.RemoveAdsFailed), analytics.events)
         }
 }

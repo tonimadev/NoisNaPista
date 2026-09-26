@@ -16,6 +16,7 @@ dependencies {
     api(libs.androidx.datastore.preferences)
     api(libs.junit)
     api(libs.kotlinx.coroutines.test)
+    api(project(":core:analytics"))
     api(project(":core:billing"))
     api(project(":core:data"))
     api(project(":core:location"))

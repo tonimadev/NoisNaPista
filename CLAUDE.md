@@ -37,6 +37,7 @@ core/data              Room, repositórios, DataStore (preferências/identidade)
 core/network           Retrofit + DTOs Moshi do backend
 core/billing           RemoveAdsRepository: compra única remove_ads_premium via lib PayWall (JitPack)
 core/ads               SDK do AdMob isolado: SponsoredBanner (banner + convite "Remover anúncios") e init
+core/analytics         Firebase Analytics isolado: AnalyticsTracker + eventos tipados (AnalyticsEvent)
 core/testing           Fakes e utilitários de teste compartilhados (só testImplementation)
 feature/<x>/bridge     NavKey da feature (@Serializable, sem UI) — o que outros módulos podem ver
 feature/<x>/impl       Telas Compose + ViewModels
@@ -87,6 +88,11 @@ Padrão de tela (MVI):
   nulável; features não dependem do SDK. Debug usa sempre o banner de teste do Google (`AdUnits`).
   IDs reais vão no `admob.properties` (raiz, git-ignored): `ADMOB_APP_ID` e um banner por tela
   (`ADMOB_BANNER_HOME`/`_MAP`/`_HISTORY`/`_RANKING`, ver `AdPlacement`); sem eles, IDs de teste.
+- **Analytics/Crashlytics anônimos**: só comportamento dentro do app. Todo evento é um `AnalyticsEvent`
+  (parâmetros só enums/números arredondados) — nunca coordenada, id de buraco, token de reporter, texto
+  digitado, `setUserId` ou user property. Advertising ID/SSAID e sinais de anúncio desligados no manifest de
+  `core:analytics`. Coleta (Analytics e Crashlytics) só no release (`FIREBASE_COLLECTION_ENABLED`).
+  `app/google-services.json` é git-ignored: sem ele o build falha.
 - O usuário recusou um toggle "celular no suporte vs. na mão" (exigiria migração) — o campo de
   observação livre do Debug cobre isso. Não repropor sem informação nova.
 
@@ -135,8 +141,8 @@ Compose UI Test sob Robolectric, MockWebServer, Hilt testing.
   `mockkStatic`. Depois que um mapa está na tela o looper principal fica ocupado: prepare o estado
   antes do `setContent`.
 - App shell (`MainActivityTest`): `@HiltAndroidTest` + `HiltTestApplication`, com `DataModule`,
-  `PreferencesModule`, `LocationModule`, `SensorModule` e `BillingModule` desinstalados e substituídos por
-  `@BindValue` (o DataStore real é singleton de processo e vazaria estado entre testes).
+  `PreferencesModule`, `LocationModule`, `SensorModule`, `BillingModule` e `AnalyticsModule` desinstalados e
+  substituídos por `@BindValue` (o DataStore real é singleton de processo e vazaria estado entre testes).
 - Biblioteca sem chave do Maps no manifest: use `setMapsApiKey(app)` (testes de `feature:tracker:impl`).
 
 Toda mudança de comportamento vem com teste, e `./gradlew koverVerifyCoverage` precisa passar.

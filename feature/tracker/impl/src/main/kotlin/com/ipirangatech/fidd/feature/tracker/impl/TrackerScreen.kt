@@ -76,6 +76,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
 import com.ipirangatech.fidd.core.model.LocationPoint
 import com.ipirangatech.fidd.core.model.Pothole
 import com.ipirangatech.fidd.core.ui.PotholeMarker
@@ -84,6 +85,18 @@ import java.util.Date
 import java.util.Locale
 
 private val SAO_PAULO = LatLng(-23.5505, -46.6333)
+
+/** Mesma leitura do resultado que decide o diálogo em TrackerScreen, para o Analytics. */
+private fun locationPermissionOutcome(
+    result: Map<String, Boolean>,
+    shouldShowRationale: Boolean,
+): AnalyticsEvent.PermissionOutcome =
+    when {
+        result[Manifest.permission.ACCESS_FINE_LOCATION] == true -> AnalyticsEvent.PermissionOutcome.PRECISE
+        result[Manifest.permission.ACCESS_COARSE_LOCATION] == true -> AnalyticsEvent.PermissionOutcome.APPROXIMATE_ONLY
+        shouldShowRationale -> AnalyticsEvent.PermissionOutcome.DENIED
+        else -> AnalyticsEvent.PermissionOutcome.BLOCKED
+    }
 
 /** Which explanation (if any) is shown before/after the system location prompt. */
 private enum class LocationPermissionDialog {
@@ -175,6 +188,11 @@ fun TrackerScreen(
     LaunchedEffect(locationRequestResult) {
         val result = locationRequestResult ?: return@LaunchedEffect
         locationRequestResult = null
+        viewModel.onIntent(
+            TrackerUiIntent.LocationPermissionAnswered(
+                locationPermissionOutcome(result, locationPermissionsState.shouldShowRationale),
+            ),
+        )
         when {
             result[Manifest.permission.ACCESS_FINE_LOCATION] == true -> startDetection()
             result[Manifest.permission.ACCESS_COARSE_LOCATION] == true ->

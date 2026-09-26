@@ -2,6 +2,8 @@ package com.ipirangatech.fidd.feature.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
+import com.ipirangatech.fidd.core.analytics.AnalyticsTracker
 import com.ipirangatech.fidd.core.data.OnboardingPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +17,7 @@ class OnboardingViewModel
     @Inject
     constructor(
         private val preferences: OnboardingPreferences,
+        private val analytics: AnalyticsTracker,
     ) : ViewModel() {
         // null = ainda lendo o DataStore; evita piscar a tela de onboarding por um frame antes da
         // primeira leitura resolver, para quem já passou por ela em uma sessão anterior.
@@ -29,7 +32,8 @@ class OnboardingViewModel
             }
         }
 
-        fun onOnboardingFinished() {
+        fun onOnboardingFinished(skipped: Boolean) {
+            analytics.log(AnalyticsEvent.OnboardingFinished(skipped))
             viewModelScope.launch { preferences.markCompleted() }
         }
     }

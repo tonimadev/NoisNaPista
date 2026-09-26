@@ -2,7 +2,9 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.google.devtools.ksp)
+    alias(libs.plugins.google.services)
     alias(libs.plugins.hilt)
     alias(libs.plugins.jetbrains.kotlin.plugin.serialization)
     alias(libs.plugins.kotlin.compose)
@@ -59,7 +61,15 @@ android {
     }
 
     buildTypes {
+        // Crashlytics e Analytics só coletam no release: crash de desenvolvimento e navegação de
+        // teste no emulador poluiriam os números reais. Para ver eventos no DebugView, troque para
+        // true localmente e rode `adb shell setprop debug.firebase.analytics.app com.ipirangatech.fidd`.
+        debug {
+            manifestPlaceholders["FIREBASE_COLLECTION_ENABLED"] = false
+        }
         release {
+            manifestPlaceholders["FIREBASE_COLLECTION_ENABLED"] = true
+
             optimization {
                 enable = false
             }
@@ -123,6 +133,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.coil.compose)
     implementation(libs.converter.moshi)
+    implementation(libs.firebase.crashlytics)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
@@ -135,7 +146,9 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.retrofit)
     implementation(platform(libs.androidx.compose.bom))
+    implementation(platform(libs.firebase.bom))
     implementation(project(":core:ads"))
+    implementation(project(":core:analytics"))
     implementation(project(":core:billing"))
     implementation(project(":core:data"))
     implementation(project(":core:location"))

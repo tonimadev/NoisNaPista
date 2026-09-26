@@ -47,7 +47,8 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun OnboardingScreen(
-    onFinish: () -> Unit,
+    /** skipped = saiu pelo "Pular" em vez de chegar ao fim. */
+    onFinish: (skipped: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val pages = remember { onboardingPages() }
@@ -64,7 +65,7 @@ fun OnboardingScreen(
                         .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                TextButton(onClick = onFinish, modifier = Modifier.align(Alignment.End)) {
+                TextButton(onClick = { onFinish(true) }, modifier = Modifier.align(Alignment.End)) {
                     Text(stringResource(R.string.onboarding_skip))
                 }
 
@@ -104,7 +105,7 @@ fun OnboardingScreen(
                 Button(
                     onClick = {
                         if (isLastPage) {
-                            onFinish()
+                            onFinish(false)
                         } else {
                             scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
                         }

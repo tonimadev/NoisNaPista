@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.ipirangatech.fidd.core.sensor.tracking.PotholeDetector
+import com.ipirangatech.fidd.core.testing.FakeAnalyticsTracker
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakeMotionSensor
 import com.ipirangatech.fidd.core.testing.FakePotholeRepository
@@ -52,7 +53,7 @@ class MapScreenTest {
     }
 
     private fun setContent(adBanner: (@androidx.compose.runtime.Composable () -> Unit)? = null): MapViewModel {
-        val vm = MapViewModel(repository, location, detector)
+        val vm = MapViewModel(repository, location, detector, FakeAnalyticsTracker())
         compose.setContent { MapScreen(viewModel = vm, adBanner = adBanner) }
         return vm
     }

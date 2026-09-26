@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
+import com.ipirangatech.fidd.core.testing.FakeAnalyticsTracker
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakePotholeRepository
 import com.ipirangatech.fidd.core.testing.testLocation
@@ -46,7 +47,7 @@ class HistoryScreenTest {
     ) = app.getString(id, *args)
 
     private fun setContent(adBanner: (@androidx.compose.runtime.Composable () -> Unit)? = null) {
-        val vm = HistoryViewModel(repository, location)
+        val vm = HistoryViewModel(repository, location, FakeAnalyticsTracker())
         compose.setContent { HistoryScreen(viewModel = vm, adBanner = adBanner) }
     }
 

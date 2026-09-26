@@ -41,6 +41,8 @@ import com.ipirangatech.fidd.ads.AdUnits
 import com.ipirangatech.fidd.ads.AdsUiEffect
 import com.ipirangatech.fidd.ads.AdsViewModel
 import com.ipirangatech.fidd.core.ads.SponsoredBanner
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
+import com.ipirangatech.fidd.core.analytics.AnalyticsTracker
 import com.ipirangatech.fidd.feature.map.bridge.MapNavKey
 import com.ipirangatech.fidd.feature.map.impl.MapScreen
 import com.ipirangatech.fidd.feature.map.impl.MapViewModel
@@ -61,9 +63,13 @@ import com.ipirangatech.fidd.feature.tracker.impl.HistoryViewModel
 import com.ipirangatech.fidd.feature.tracker.impl.TrackerScreen
 import com.ipirangatech.fidd.ui.theme.FiddTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var analytics: AnalyticsTracker
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -81,8 +87,13 @@ class MainActivity : ComponentActivity() {
                         // Ainda lendo o DataStore — não renderiza nada por um frame em vez de
                         // arriscar mostrar a onboarding pra quem já passou por ela antes.
                         null -> Unit
-                        false -> OnboardingScreen(onFinish = onboardingViewModel::onOnboardingFinished)
-                        true -> MainContent()
+                        false -> {
+                            LaunchedEffect(Unit) {
+                                analytics.log(AnalyticsEvent.ScreenView(AnalyticsEvent.Screen.ONBOARDING))
+                            }
+                            OnboardingScreen(onFinish = onboardingViewModel::onOnboardingFinished)
+                        }
+                        true -> MainContent(analytics)
                     }
                 }
             }
@@ -91,9 +102,14 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun MainContent() {
+private fun MainContent(analytics: AnalyticsTracker) {
     val backStack = rememberNavBackStack(TrackerNavKey)
     val currentKey = backStack.lastOrNull() ?: TrackerNavKey
+    // Uma visualização por troca de aba (a lista de detecções do Debug não conta: só existe no
+    // build debug, que não coleta).
+    LaunchedEffect(currentKey) {
+        analyticsScreenOf(currentKey)?.let { analytics.log(AnalyticsEvent.ScreenView(it)) }
+    }
     val adaptiveInfo = currentWindowAdaptiveInfo()
     val isExpanded = adaptiveInfo.windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED
 
@@ -282,3 +298,12 @@ private fun MainContent() {
         }
     }
 }
+
+private fun analyticsScreenOf(key: NavKey): AnalyticsEvent.Screen? =
+    when (key) {
+        is TrackerNavKey -> AnalyticsEvent.Screen.HOME
+        is MapNavKey -> AnalyticsEvent.Screen.MAP
+        is HistoryNavKey -> AnalyticsEvent.Screen.HISTORY
+        is RankingNavKey -> AnalyticsEvent.Screen.RANKING
+        else -> null
+    }

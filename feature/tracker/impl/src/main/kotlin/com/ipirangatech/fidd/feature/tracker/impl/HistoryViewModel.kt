@@ -3,6 +3,8 @@ package com.ipirangatech.fidd.feature.tracker.impl
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
+import com.ipirangatech.fidd.core.analytics.AnalyticsTracker
 import com.ipirangatech.fidd.core.data.PotholeRepository
 import com.ipirangatech.fidd.core.location.LocationProvider
 import com.ipirangatech.fidd.core.model.Pothole
@@ -39,6 +41,7 @@ class HistoryViewModel
     constructor(
         private val repository: PotholeRepository,
         private val locationProvider: LocationProvider,
+        private val analytics: AnalyticsTracker,
     ) : ViewModel() {
         val potholes: StateFlow<List<Pothole>> =
             repository.getPotholes()
@@ -61,10 +64,19 @@ class HistoryViewModel
 
         fun onIntent(intent: HistoryUiIntent) {
             when (intent) {
-                is HistoryUiIntent.Delete -> viewModelScope.launch { repository.delete(intent.pothole) }
-                is HistoryUiIntent.MarkFalseAlarm -> viewModelScope.launch { repository.markFalseAlarm(intent.pothole) }
+                is HistoryUiIntent.Delete -> {
+                    analytics.log(AnalyticsEvent.PotholeDeleted)
+                    viewModelScope.launch { repository.delete(intent.pothole) }
+                }
+                is HistoryUiIntent.MarkFalseAlarm -> {
+                    analytics.log(AnalyticsEvent.FalseAlarmMarked)
+                    viewModelScope.launch { repository.markFalseAlarm(intent.pothole) }
+                }
                 is HistoryUiIntent.VoteFixed -> voteFixed(intent.pothole)
-                HistoryUiIntent.RefreshCommunity -> refreshCommunity(notifyOnFailure = true)
+                HistoryUiIntent.RefreshCommunity -> {
+                    analytics.log(AnalyticsEvent.CommunityRefreshed(AnalyticsEvent.Screen.HISTORY))
+                    refreshCommunity(notifyOnFailure = true)
+                }
             }
         }
 
@@ -74,9 +86,19 @@ class HistoryViewModel
                 repository.castFixVote(serverId)
                     .onSuccess { updated ->
                         replaceInCommunityList(updated)
+                        val markedFixed = updated.status == "FIXED"
+                        analytics.log(
+                            AnalyticsEvent.FixVoteCast(
+                                if (markedFixed) {
+                                    AnalyticsEvent.VoteResult.MARKED_FIXED
+                                } else {
+                                    AnalyticsEvent.VoteResult.REGISTERED
+                                },
+                            ),
+                        )
                         _uiEffect.send(
                             HistoryUiEffect.ShowMessage(
-                                if (updated.status == "FIXED") {
+                                if (markedFixed) {
                                     R.string.history_vote_marked_fixed
                                 } else {
                                     R.string.history_vote_registered
@@ -85,6 +107,7 @@ class HistoryViewModel
                         )
                     }
                     .onFailure {
+                        analytics.log(AnalyticsEvent.FixVoteCast(AnalyticsEvent.VoteResult.FAILED))
                         _uiEffect.send(HistoryUiEffect.ShowMessage(R.string.history_vote_failed))
                     }
             }

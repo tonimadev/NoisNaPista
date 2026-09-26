@@ -5,11 +5,15 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
+import com.ipirangatech.fidd.core.analytics.AnalyticsModule
+import com.ipirangatech.fidd.core.analytics.AnalyticsTracker
 import com.ipirangatech.fidd.core.location.LocationModule
 import com.ipirangatech.fidd.core.location.LocationProvider
 import com.ipirangatech.fidd.core.sensor.MotionSensor
 import com.ipirangatech.fidd.core.sensor.R
 import com.ipirangatech.fidd.core.sensor.SensorModule
+import com.ipirangatech.fidd.core.testing.FakeAnalyticsTracker
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakeMotionSensor
 import dagger.hilt.android.testing.BindValue
@@ -29,10 +33,12 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowSystemClock
+import java.time.Duration
 import javax.inject.Inject
 
 @HiltAndroidTest
-@UninstallModules(SensorModule::class, LocationModule::class)
+@UninstallModules(SensorModule::class, LocationModule::class, AnalyticsModule::class)
 @Config(application = HiltTestApplication::class)
 @RunWith(RobolectricTestRunner::class)
 class TrackingServiceTest {
@@ -46,6 +52,12 @@ class TrackingServiceTest {
     @BindValue
     @JvmField
     val locationProvider: LocationProvider = FakeLocationProvider()
+
+    private val fakeAnalytics = FakeAnalyticsTracker()
+
+    @BindValue
+    @JvmField
+    val analytics: AnalyticsTracker = fakeAnalytics
 
     @Inject
     lateinit var detector: PotholeDetector
@@ -69,6 +81,7 @@ class TrackingServiceTest {
                 NotificationManager::class.java,
             ).getNotificationChannel("tracking_channel")
         assertEquals(NotificationManager.IMPORTANCE_LOW, channel.importance)
+        assertEquals(listOf(AnalyticsEvent.DetectionStarted), fakeAnalytics.events)
     }
 
     @Test
@@ -87,14 +100,24 @@ class TrackingServiceTest {
         assertEquals(Service.START_NOT_STICKY, service.onStartCommand(stop, 0, 1))
         assertTrue(shadowOf(service).isStoppedBySelf)
         assertEquals(null, service.onBind(stop))
+        service.onDestroy()
+        assertEquals(
+            AnalyticsEvent.DetectionStopped(AnalyticsEvent.StopSource.NOTIFICATION, durationMinutes = 0),
+            fakeAnalytics.events.last(),
+        )
     }
 
     @Test
     fun `destroying the service stops detection`() {
         val controller = Robolectric.buildService(TrackingService::class.java).create()
 
+        ShadowSystemClock.advanceBy(Duration.ofMinutes(12).plusSeconds(40))
         controller.destroy()
 
         assertFalse(detector.isTracking.value)
+        assertEquals(
+            AnalyticsEvent.DetectionStopped(AnalyticsEvent.StopSource.APP, durationMinutes = 12),
+            fakeAnalytics.events.last(),
+        )
     }
 }

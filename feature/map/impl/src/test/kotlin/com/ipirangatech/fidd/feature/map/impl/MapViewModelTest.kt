@@ -1,8 +1,10 @@
 package com.ipirangatech.fidd.feature.map.impl
 
 import app.cash.turbine.test
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
 import com.ipirangatech.fidd.core.model.GeoBounds
 import com.ipirangatech.fidd.core.sensor.tracking.PotholeDetector
+import com.ipirangatech.fidd.core.testing.FakeAnalyticsTracker
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakeMotionSensor
 import com.ipirangatech.fidd.core.testing.FakePotholeRepository
@@ -30,7 +32,9 @@ class MapViewModelTest {
     @After
     fun tearDown() = detector.stopDetection()
 
-    private fun viewModel() = MapViewModel(repository, location, detector)
+    private val analytics = FakeAnalyticsTracker()
+
+    private fun viewModel() = MapViewModel(repository, location, detector, analytics)
 
     @Test
     fun `only active local potholes are shown`() =
@@ -81,6 +85,7 @@ class MapViewModelTest {
             }
             assertEquals(listOf(viewport, viewport), repository.fetchedBounds)
             assertEquals(listOf("srv-1"), vm.communityPotholes.value.map { it.id })
+            assertTrue("camera moves are not user refreshes", analytics.events.isEmpty())
         }
 
     @Test
@@ -98,6 +103,7 @@ class MapViewModelTest {
                 vm.refreshCommunityPotholes()
                 assertEquals(MapUiEffect.ShowMessage(R.string.map_community_refresh_failed), awaitItem())
             }
+            assertEquals(List(2) { AnalyticsEvent.CommunityRefreshed(AnalyticsEvent.Screen.MAP) }, analytics.events)
         }
 
     @Test
@@ -128,5 +134,6 @@ class MapViewModelTest {
                 vm.recenter()
                 assertEquals(MapUiEffect.ShowMessage(R.string.map_location_unavailable), awaitItem())
             }
+            assertEquals(List(2) { AnalyticsEvent.MapRecentered }, analytics.events)
         }
 }

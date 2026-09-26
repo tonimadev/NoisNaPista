@@ -3,10 +3,12 @@ package com.ipirangatech.fidd.feature.tracker.impl
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.test
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
 import com.ipirangatech.fidd.core.data.OnboardingPreferences
 import com.ipirangatech.fidd.core.model.AccelerationSample
 import com.ipirangatech.fidd.core.sensor.tracking.PotholeDetector
 import com.ipirangatech.fidd.core.sensor.tracking.TrackingService
+import com.ipirangatech.fidd.core.testing.FakeAnalyticsTracker
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakeMotionSensor
 import com.ipirangatech.fidd.core.testing.FakePotholeRepository
@@ -43,13 +45,14 @@ class TrackerViewModelTest {
     private val location = FakeLocationProvider()
     private val detector = PotholeDetector(motion, location)
     private val repository = FakePotholeRepository()
+    private val analytics = FakeAnalyticsTracker()
 
     @After
     fun tearDown() = detector.stopDetection()
 
     private fun kotlinx.coroutines.test.TestScope.viewModel(
         preferences: OnboardingPreferences = OnboardingPreferences(testPreferencesDataStore(backgroundScope, tmp.root)),
-    ) = TrackerViewModel(application, detector, location, repository, preferences)
+    ) = TrackerViewModel(application, detector, location, repository, preferences, analytics)
 
     @Test
     fun `starting without location permission shows an error and starts nothing`() =
@@ -61,6 +64,20 @@ class TrackerViewModelTest {
                 assertEquals(TrackerUiEffect.ShowError(R.string.tracker_location_permission_required), awaitItem())
             }
             assertNull(shadowOf(application).nextStartedService)
+            assertEquals(listOf(AnalyticsEvent.DetectionBlockedByPermission), analytics.events)
+        }
+
+    @Test
+    fun `the answer to the location request is logged`() =
+        runTest {
+            val vm = viewModel()
+
+            vm.onIntent(TrackerUiIntent.LocationPermissionAnswered(AnalyticsEvent.PermissionOutcome.BLOCKED))
+
+            assertEquals(
+                listOf(AnalyticsEvent.LocationPermissionAnswered(AnalyticsEvent.PermissionOutcome.BLOCKED)),
+                analytics.events,
+            )
         }
 
     @Test
@@ -150,6 +167,7 @@ class TrackerViewModelTest {
             motion.acceleration.emit(AccelerationSample(0f, 0f, 25f, 0L))
             vm.uiState.awaitFirst { it.detectedPotholes.isNotEmpty() }
             awaitCondition { repository.savedSensorWindows.isNotEmpty() }
+            awaitCondition { AnalyticsEvent.PotholeDetected in analytics.events }
 
             assertEquals(25f, vm.uiState.value.detectedPotholes.single().severity)
             assertEquals(

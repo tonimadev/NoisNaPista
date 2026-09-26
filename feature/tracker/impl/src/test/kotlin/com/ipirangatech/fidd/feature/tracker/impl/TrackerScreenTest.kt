@@ -19,10 +19,12 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
 import com.ipirangatech.fidd.core.data.OnboardingPreferences
 import com.ipirangatech.fidd.core.model.AccelerationSample
 import com.ipirangatech.fidd.core.sensor.tracking.PotholeDetector
 import com.ipirangatech.fidd.core.sensor.tracking.TrackingService
+import com.ipirangatech.fidd.core.testing.FakeAnalyticsTracker
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakeMotionSensor
 import com.ipirangatech.fidd.core.testing.FakePotholeRepository
@@ -38,6 +40,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -63,6 +66,7 @@ class TrackerScreenTest {
     private val location = FakeLocationProvider()
     private val detector = PotholeDetector(motion, location)
     private val repository = FakePotholeRepository()
+    private val analytics = FakeAnalyticsTracker()
     private val dataStoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var viewModel: TrackerViewModel
 
@@ -86,7 +90,7 @@ class TrackerScreenTest {
     ) {
         val preferences = OnboardingPreferences(testPreferencesDataStore(dataStoreScope, tmp.root))
         if (startedBefore) runBlocking { preferences.markDetectionStarted() }
-        viewModel = TrackerViewModel(app, detector, location, repository, preferences)
+        viewModel = TrackerViewModel(app, detector, location, repository, preferences, analytics)
         compose.setContent {
             TrackerScreen(
                 viewModel = viewModel,
@@ -115,6 +119,9 @@ class TrackerScreenTest {
         )
         compose.waitForIdle()
     }
+
+    private fun assertPermissionAnswered(outcome: AnalyticsEvent.PermissionOutcome) =
+        assertTrue(AnalyticsEvent.LocationPermissionAnswered(outcome) in analytics.events)
 
     private fun startedService() = shadowOf(app).nextStartedService?.component?.className
 
@@ -159,6 +166,7 @@ class TrackerScreenTest {
         compose.onNodeWithText(str(R.string.tracker_start_button)).performClick()
         compose.onNodeWithText(str(R.string.tracker_permission_rationale_confirm)).performClick()
         answerPermissionRequest(true, true) // fine + coarse
+        assertPermissionAnswered(AnalyticsEvent.PermissionOutcome.PRECISE)
         assertEquals(
             Manifest.permission.POST_NOTIFICATIONS,
             shadowOf(compose.activity).lastRequestedPermission.requestedPermissions.single(),
@@ -177,6 +185,7 @@ class TrackerScreenTest {
         answerPermissionRequest(false, true)
 
         compose.onNodeWithText(str(R.string.tracker_permission_precise_title)).assertExists()
+        assertPermissionAnswered(AnalyticsEvent.PermissionOutcome.APPROXIMATE_ONLY)
         shadowOf(
             app.packageManager,
         ).setShouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION, true)
@@ -211,6 +220,7 @@ class TrackerScreenTest {
 
         answerPermissionRequest(false, false)
 
+        assertPermissionAnswered(AnalyticsEvent.PermissionOutcome.DENIED)
         compose.onNodeWithText(str(R.string.tracker_permission_blocked_title)).assertDoesNotExist()
         compose.onNodeWithText(str(R.string.tracker_permission_precise_title)).assertDoesNotExist()
     }
@@ -223,6 +233,7 @@ class TrackerScreenTest {
 
         answerPermissionRequest(false, false)
         compose.onNodeWithText(str(R.string.tracker_permission_blocked_title)).assertExists()
+        assertPermissionAnswered(AnalyticsEvent.PermissionOutcome.BLOCKED)
         compose.onNodeWithText(str(R.string.tracker_permission_open_settings)).performClick()
 
         assertEquals(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, shadowOf(app).nextStartedActivity.action)

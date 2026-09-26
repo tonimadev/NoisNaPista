@@ -5,6 +5,8 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ipirangatech.fidd.R
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
+import com.ipirangatech.fidd.core.analytics.AnalyticsTracker
 import com.ipirangatech.fidd.core.billing.RemoveAdsRepository
 import com.ipirangatech.fidd.core.sensor.tracking.PotholeDetector
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +33,7 @@ class AdsViewModel
     constructor(
         private val removeAdsRepository: RemoveAdsRepository,
         potholeDetector: PotholeDetector,
+        private val analytics: AnalyticsTracker,
     ) : ViewModel() {
         /**
          * Banner só quando a loja confirmou que o usuário NÃO comprou (null = ainda não sabemos) e a
@@ -52,6 +55,7 @@ class AdsViewModel
             removeAdsRepository.connect()
             viewModelScope.launch {
                 removeAdsRepository.purchaseFailures.collect {
+                    analytics.log(AnalyticsEvent.RemoveAdsFailed)
                     _uiEffect.send(AdsUiEffect.ShowMessage(R.string.ads_purchase_failed))
                 }
             }
@@ -59,6 +63,7 @@ class AdsViewModel
                 removeAdsRepository.adsRemoved.collect { removed ->
                     if (removed == true && purchaseRequested) {
                         purchaseRequested = false
+                        analytics.log(AnalyticsEvent.RemoveAdsPurchased)
                         _uiEffect.send(AdsUiEffect.ShowMessage(R.string.ads_purchase_thanks))
                     }
                 }
@@ -66,6 +71,7 @@ class AdsViewModel
         }
 
         fun onRemoveAdsClick(activity: Activity) {
+            analytics.log(AnalyticsEvent.RemoveAdsClicked)
             purchaseRequested = true
             removeAdsRepository.purchase(activity)
         }

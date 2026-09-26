@@ -3,7 +3,9 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.detekt)
+    alias(libs.plugins.firebase.crashlytics) apply false
     alias(libs.plugins.google.devtools.ksp) apply false
+    alias(libs.plugins.google.services) apply false
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.jetbrains.kotlin.plugin.serialization) apply false
     alias(libs.plugins.kotlin.android) apply false
@@ -30,6 +32,7 @@ subprojects {
 dependencies {
     kover(project(":app"))
     kover(project(":core:ads"))
+    kover(project(":core:analytics"))
     kover(project(":core:billing"))
     kover(project(":core:data"))
     kover(project(":core:location"))

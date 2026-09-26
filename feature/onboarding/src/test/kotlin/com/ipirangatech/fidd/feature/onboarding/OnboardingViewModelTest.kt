@@ -1,7 +1,9 @@
 package com.ipirangatech.fidd.feature.onboarding
 
 import app.cash.turbine.test
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
 import com.ipirangatech.fidd.core.data.OnboardingPreferences
+import com.ipirangatech.fidd.core.testing.FakeAnalyticsTracker
 import com.ipirangatech.fidd.core.testing.MainDispatcherRule
 import com.ipirangatech.fidd.core.testing.testPreferencesDataStore
 import kotlinx.coroutines.test.runTest
@@ -20,15 +22,21 @@ class OnboardingViewModelTest {
     @Test
     fun `state is unknown until read, then false, then true once finished`() =
         runTest {
-            val vm = OnboardingViewModel(OnboardingPreferences(testPreferencesDataStore(backgroundScope, tmp.root)))
+            val analytics = FakeAnalyticsTracker()
+            val vm =
+                OnboardingViewModel(
+                    OnboardingPreferences(testPreferencesDataStore(backgroundScope, tmp.root)),
+                    analytics,
+                )
 
             vm.hasCompletedOnboarding.test {
                 var state = awaitItem()
                 if (state == null) state = awaitItem()
                 assertEquals(false, state)
 
-                vm.onOnboardingFinished()
+                vm.onOnboardingFinished(skipped = true)
                 assertEquals(true, awaitItem())
             }
+            assertEquals(listOf(AnalyticsEvent.OnboardingFinished(skipped = true)), analytics.events)
         }
 }

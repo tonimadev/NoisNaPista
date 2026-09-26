@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Analytics anônimo: só comportamento dentro do app. Nada que identifique a pessoa ou o
+         aparelho fora do Firebase (advertising ID, SSAID) e nenhum dado vai para anúncios — o
+         AdMob funciona à parte e não recebe nada do Analytics. As telas são registradas à mão
+         (AnalyticsEvent.ScreenView): com uma Activity só, o automático registraria sempre
+         "MainActivity". -->
+    <application>
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_ssaid_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_storage"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_user_data"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_personalization_signals"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_automatic_screen_reporting_enabled"
+            android:value="false" />
+    </application>
+
+</manifest>

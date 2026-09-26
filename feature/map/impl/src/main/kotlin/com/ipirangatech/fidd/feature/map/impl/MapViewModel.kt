@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
+import com.ipirangatech.fidd.core.analytics.AnalyticsTracker
 import com.ipirangatech.fidd.core.data.PotholeRepository
 import com.ipirangatech.fidd.core.location.LocationProvider
 import com.ipirangatech.fidd.core.model.GeoBounds
@@ -39,6 +41,7 @@ class MapViewModel
         private val repository: PotholeRepository,
         private val locationProvider: LocationProvider,
         private val potholeDetector: PotholeDetector,
+        private val analytics: AnalyticsTracker,
     ) : ViewModel() {
         val potholes: StateFlow<List<Pothole>> =
             repository.getActivePotholes()
@@ -84,6 +87,7 @@ class MapViewModel
         /** Botão de recentralizar: com o rastreamento ativo usa o fix mais recente dele; sem
          * rastreamento, busca um fix novo (o de init pode estar velho se o usuário se moveu). */
         fun recenter() {
+            analytics.log(AnalyticsEvent.MapRecentered)
             viewModelScope.launch {
                 val location =
                     potholeDetector.currentLocation.value
@@ -107,6 +111,8 @@ class MapViewModel
 
         fun refreshCommunityPotholes(notifyOnFailure: Boolean = true) {
             val bounds = lastViewport ?: return
+            // Só o "Atualizar" explícito; o recarregamento a cada movimento da câmera não é uma ação.
+            if (notifyOnFailure) analytics.log(AnalyticsEvent.CommunityRefreshed(AnalyticsEvent.Screen.MAP))
             // A newer viewport supersedes an in-flight fetch for an old one, so a slow response for
             // where the user *was* can never overwrite the pins for where they are now.
             fetchJob?.cancel()

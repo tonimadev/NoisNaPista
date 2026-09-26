@@ -42,6 +42,7 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     implementation(platform(libs.androidx.compose.bom))
+    implementation(project(":core:analytics"))
     implementation(project(":core:data"))
     implementation(project(":core:location"))
     implementation(project(":core:model"))

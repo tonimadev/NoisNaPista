@@ -6,6 +6,8 @@ import android.os.Build
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
+import com.ipirangatech.fidd.core.analytics.AnalyticsTracker
 import com.ipirangatech.fidd.core.data.OnboardingPreferences
 import com.ipirangatech.fidd.core.data.PotholeRepository
 import com.ipirangatech.fidd.core.location.LocationProvider
@@ -52,6 +54,9 @@ sealed interface TrackerUiIntent {
 
     data class TogglePermission(val permission: PermissionType, val granted: Boolean) : TrackerUiIntent
 
+    /** A resposta da pessoa ao pedido de localização (só registrada no Analytics). */
+    data class LocationPermissionAnswered(val outcome: AnalyticsEvent.PermissionOutcome) : TrackerUiIntent
+
     enum class PermissionType {
         LOCATION,
         NOTIFICATION,
@@ -75,6 +80,7 @@ class TrackerViewModel
         private val locationProvider: LocationProvider,
         private val repository: PotholeRepository,
         private val preferences: OnboardingPreferences,
+        private val analytics: AnalyticsTracker,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(TrackerUiState())
         val uiState: StateFlow<TrackerUiState> = _uiState.asStateFlow()
@@ -86,6 +92,7 @@ class TrackerViewModel
             viewModelScope.launch {
                 potholeDetector.potholes.collect { pothole ->
                     repository.savePothole(pothole)
+                    analytics.log(AnalyticsEvent.PotholeDetected)
                 }
             }
             viewModelScope.launch {
@@ -136,6 +143,8 @@ class TrackerViewModel
             when (intent) {
                 TrackerUiIntent.StartTracking -> startTracking()
                 TrackerUiIntent.StopTracking -> stopTracking()
+                is TrackerUiIntent.LocationPermissionAnswered ->
+                    analytics.log(AnalyticsEvent.LocationPermissionAnswered(intent.outcome))
                 is TrackerUiIntent.TogglePermission -> {
                     _uiState.update {
                         when (intent.permission) {
@@ -158,6 +167,7 @@ class TrackerViewModel
 
         private fun startTracking() {
             if (!_uiState.value.locationPermissionGranted) {
+                analytics.log(AnalyticsEvent.DetectionBlockedByPermission)
                 viewModelScope.launch {
                     _uiEffect.send(TrackerUiEffect.ShowError(R.string.tracker_location_permission_required))
                 }

@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
+import com.ipirangatech.fidd.core.analytics.AnalyticsTracker
 import com.ipirangatech.fidd.core.data.CityRepository
 import com.ipirangatech.fidd.core.data.RankingLocationPreferences
 import com.ipirangatech.fidd.core.location.LocationProvider
@@ -46,6 +48,7 @@ class RankingViewModel
         private val cityRepository: CityRepository,
         private val locationProvider: LocationProvider,
         private val locationPreferences: RankingLocationPreferences,
+        private val analytics: AnalyticsTracker,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(RankingUiState())
         val uiState: StateFlow<RankingUiState> = _uiState.asStateFlow()
@@ -78,6 +81,7 @@ class RankingViewModel
 
         fun onSortByChanged(sortBy: CityRankingSortBy) {
             if (sortBy == _uiState.value.sortBy) return
+            analytics.log(AnalyticsEvent.RankingSortChanged(sortBy))
             _uiState.update { it.copy(sortBy = sortBy) }
             refreshRanking(notifyOnFailure = true)
             val lat = lastLat
@@ -88,6 +92,7 @@ class RankingViewModel
         /** Re-fetches the ranking and, if known, "minha cidade" from the saved location — never a new
          * GPS fix; that only happens when the user asks for it via [findMyCity]. */
         fun refresh() {
+            analytics.log(AnalyticsEvent.CommunityRefreshed(AnalyticsEvent.Screen.RANKING))
             refreshRanking(notifyOnFailure = true)
             val lat = lastLat
             val lon = lastLon
@@ -123,6 +128,7 @@ class RankingViewModel
         /** Takes a fresh location fix (first use, or the card's "atualizar localização" button), saves
          * it for later visits, then resolves and shows their city's ranking row. */
         fun findMyCity() {
+            analytics.log(AnalyticsEvent.RankingMyCityRequested)
             viewModelScope.launch {
                 _uiState.update { it.copy(isLocatingMyCity = true) }
                 val location = locationProvider.getCurrentLocation()

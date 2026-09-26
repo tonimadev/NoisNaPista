@@ -1,9 +1,11 @@
 package com.ipirangatech.fidd.feature.ranking.impl
 
 import app.cash.turbine.test
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
 import com.ipirangatech.fidd.core.data.RankingLocationPreferences
 import com.ipirangatech.fidd.core.model.CityRankingList
 import com.ipirangatech.fidd.core.model.CityRankingSortBy
+import com.ipirangatech.fidd.core.testing.FakeAnalyticsTracker
 import com.ipirangatech.fidd.core.testing.FakeCityRepository
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.MainDispatcherRule
@@ -30,6 +32,7 @@ class RankingViewModelTest {
 
     private val cities = FakeCityRepository()
     private val location = FakeLocationProvider()
+    private val analytics = FakeAnalyticsTracker()
     private val list =
         CityRankingList(
             totalCities = 3,
@@ -41,7 +44,7 @@ class RankingViewModelTest {
         RankingLocationPreferences(testPreferencesDataStore(backgroundScope, tmp.root))
 
     private fun TestScope.viewModel(preferences: RankingLocationPreferences = preferences()) =
-        RankingViewModel(cities, location, preferences)
+        RankingViewModel(cities, location, preferences, analytics)
 
     @Test
     fun `the ranking loads on open`() =
@@ -81,6 +84,7 @@ class RankingViewModelTest {
             }
             assertFalse(vm.uiState.value.loadFailed)
             assertEquals(list.top, vm.uiState.value.top)
+            assertEquals(listOf(AnalyticsEvent.CommunityRefreshed(AnalyticsEvent.Screen.RANKING)), analytics.events)
         }
 
     @Test
@@ -94,6 +98,7 @@ class RankingViewModelTest {
             assertEquals(listOf(CityRankingSortBy.POTHOLES, CityRankingSortBy.FIXED), cities.rankingRequests)
             assertEquals(CityRankingSortBy.FIXED, vm.uiState.value.sortBy)
             assertTrue("no saved location, so no city lookup", cities.nearestRequests.isEmpty())
+            assertEquals(listOf(AnalyticsEvent.RankingSortChanged(CityRankingSortBy.FIXED)), analytics.events)
         }
 
     @Test
@@ -109,6 +114,7 @@ class RankingViewModelTest {
             assertEquals(7, vm.uiState.awaitFirst { it.myCity != null && !it.isLocatingMyCity }.myCity?.rank)
             assertFalse(vm.uiState.value.isLocatingMyCity)
             assertEquals(-23.0 to -46.0, prefs.getLastLocation())
+            assertEquals(listOf(AnalyticsEvent.RankingMyCityRequested), analytics.events)
         }
 
     @Test

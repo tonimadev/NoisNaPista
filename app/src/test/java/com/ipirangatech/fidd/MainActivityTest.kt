@@ -8,6 +8,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
+import com.ipirangatech.fidd.core.analytics.AnalyticsModule
+import com.ipirangatech.fidd.core.analytics.AnalyticsTracker
 import com.ipirangatech.fidd.core.billing.BillingModule
 import com.ipirangatech.fidd.core.billing.RemoveAdsRepository
 import com.ipirangatech.fidd.core.data.CityRepository
@@ -21,6 +24,7 @@ import com.ipirangatech.fidd.core.model.DetectionDebugEntry
 import com.ipirangatech.fidd.core.model.DetectionLabel
 import com.ipirangatech.fidd.core.sensor.MotionSensor
 import com.ipirangatech.fidd.core.sensor.SensorModule
+import com.ipirangatech.fidd.core.testing.FakeAnalyticsTracker
 import com.ipirangatech.fidd.core.testing.FakeCityRepository
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakeMotionSensor
@@ -66,6 +70,7 @@ import com.ipirangatech.fidd.feature.tracker.impl.R as TrackerR
     LocationModule::class,
     SensorModule::class,
     BillingModule::class,
+    AnalyticsModule::class,
 )
 @Config(application = HiltTestApplication::class, qualifiers = "w411dp-h2000dp")
 @RunWith(RobolectricTestRunner::class)
@@ -109,6 +114,12 @@ class MainActivityTest {
     @JvmField
     val removeAdsRepository: RemoveAdsRepository = fakeRemoveAds
 
+    private val fakeAnalytics = FakeAnalyticsTracker()
+
+    @BindValue
+    @JvmField
+    val analytics: AnalyticsTracker = fakeAnalytics
+
     // The real DataStore is a process-wide singleton that would leak onboarding state between tests.
     private val dataStoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -133,6 +144,10 @@ class MainActivityTest {
             compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
         }
 
+    // The onboarding may flash for a frame before completeOnboarding()'s write lands.
+    private fun eventsAfterOnboarding() =
+        fakeAnalytics.events.filter { it != AnalyticsEvent.ScreenView(AnalyticsEvent.Screen.ONBOARDING) }
+
     private fun completeOnboarding() {
         runBlocking { onboardingPreferences.markCompleted() }
         waitForText(str(R.string.nav_home))
@@ -145,6 +160,14 @@ class MainActivityTest {
         compose.onNodeWithText(str(OnboardingR.string.onboarding_skip)).performClick()
 
         waitForText(str(TrackerR.string.tracker_start_button))
+        assertEquals(
+            listOf(
+                AnalyticsEvent.ScreenView(AnalyticsEvent.Screen.ONBOARDING),
+                AnalyticsEvent.OnboardingFinished(skipped = true),
+                AnalyticsEvent.ScreenView(AnalyticsEvent.Screen.HOME),
+            ),
+            fakeAnalytics.events,
+        )
     }
 
     @Test
@@ -179,6 +202,17 @@ class MainActivityTest {
 
         compose.onAllNodesWithText(str(R.string.nav_home))[0].performClick()
         waitForText(str(TrackerR.string.tracker_start_button))
+
+        assertEquals(
+            listOf(
+                AnalyticsEvent.Screen.HOME,
+                AnalyticsEvent.Screen.HISTORY,
+                AnalyticsEvent.Screen.RANKING,
+                AnalyticsEvent.Screen.MAP,
+                AnalyticsEvent.Screen.HOME,
+            ).map { AnalyticsEvent.ScreenView(it) },
+            eventsAfterOnboarding(),
+        )
     }
 
     @Test
@@ -192,6 +226,11 @@ class MainActivityTest {
 
         compose.onNodeWithContentDescription(str(TrackerR.string.common_back_cd)).performClick()
         waitForText(str(TrackerR.string.debug_list_title))
+        assertEquals(
+            "the debug screens are not app behavior",
+            listOf(AnalyticsEvent.ScreenView(AnalyticsEvent.Screen.HOME)),
+            eventsAfterOnboarding(),
+        )
     }
 }
 
@@ -203,6 +242,7 @@ class MainActivityTest {
     LocationModule::class,
     SensorModule::class,
     BillingModule::class,
+    AnalyticsModule::class,
 )
 @Config(application = HiltTestApplication::class, qualifiers = "w1280dp-h800dp-night")
 @RunWith(RobolectricTestRunner::class)
@@ -234,6 +274,12 @@ class MainActivityExpandedTest {
     @BindValue
     @JvmField
     val removeAdsRepository: RemoveAdsRepository = fakeRemoveAds
+
+    private val fakeAnalytics = FakeAnalyticsTracker()
+
+    @BindValue
+    @JvmField
+    val analytics: AnalyticsTracker = fakeAnalytics
 
     // The real DataStore is a process-wide singleton that would leak onboarding state between tests.
     private val dataStoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

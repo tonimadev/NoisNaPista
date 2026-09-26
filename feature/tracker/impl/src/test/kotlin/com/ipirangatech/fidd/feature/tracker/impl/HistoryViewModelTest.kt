@@ -1,6 +1,8 @@
 package com.ipirangatech.fidd.feature.tracker.impl
 
 import app.cash.turbine.test
+import com.ipirangatech.fidd.core.analytics.AnalyticsEvent
+import com.ipirangatech.fidd.core.testing.FakeAnalyticsTracker
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.FakePotholeRepository
 import com.ipirangatech.fidd.core.testing.MainDispatcherRule
@@ -19,7 +21,9 @@ class HistoryViewModelTest {
     private val repository = FakePotholeRepository()
     private val locationProvider = FakeLocationProvider(currentLocation = testLocation())
 
-    private fun viewModel() = HistoryViewModel(repository, locationProvider)
+    private val analytics = FakeAnalyticsTracker()
+
+    private fun viewModel() = HistoryViewModel(repository, locationProvider, analytics)
 
     @Test
     fun `local potholes come straight from the repository`() =
@@ -67,6 +71,10 @@ class HistoryViewModelTest {
                 vm.onIntent(HistoryUiIntent.RefreshCommunity)
                 assertEquals(HistoryUiEffect.ShowMessage(R.string.history_community_location_unavailable), awaitItem())
             }
+            assertEquals(
+                List(2) { AnalyticsEvent.CommunityRefreshed(AnalyticsEvent.Screen.HISTORY) },
+                analytics.events,
+            )
         }
 
     @Test
@@ -81,6 +89,7 @@ class HistoryViewModelTest {
 
             assertEquals(listOf(pothole), repository.markedFalseAlarm)
             assertEquals(listOf(pothole), repository.deleted)
+            assertEquals(listOf(AnalyticsEvent.FalseAlarmMarked, AnalyticsEvent.PotholeDeleted), analytics.events)
         }
 
     @Test
@@ -107,6 +116,14 @@ class HistoryViewModelTest {
                 assertEquals(HistoryUiEffect.ShowMessage(R.string.history_vote_failed), awaitItem())
             }
             assertEquals(listOf("srv-1", "srv-1", "srv-1"), repository.votedServerIds)
+            assertEquals(
+                listOf(
+                    AnalyticsEvent.VoteResult.REGISTERED,
+                    AnalyticsEvent.VoteResult.MARKED_FIXED,
+                    AnalyticsEvent.VoteResult.FAILED,
+                ).map { AnalyticsEvent.FixVoteCast(it) },
+                analytics.events,
+            )
         }
 
     @Test

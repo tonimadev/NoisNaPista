@@ -29,6 +29,14 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${ADMOB_APP_ID}" />
 
+        <!-- Ligados só no release (ver buildTypes no app/build.gradle.kts). -->
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="${FIREBASE_COLLECTION_ENABLED}" />
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="${FIREBASE_COLLECTION_ENABLED}" />
+
         <!-- WorkManager self-initializes via this provider during ContentProvider#onCreate(),
              which runs before Application#onCreate() — i.e. before Hilt injects our
              HiltWorkerFactory into FiddApp. Left as-is, WorkManager would build its

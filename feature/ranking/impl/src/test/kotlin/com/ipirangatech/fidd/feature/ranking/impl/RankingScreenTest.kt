@@ -24,6 +24,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.ipirangatech.fidd.core.data.RankingLocationPreferences
 import com.ipirangatech.fidd.core.model.CityRankingList
 import com.ipirangatech.fidd.core.model.CityRankingSortBy
+import com.ipirangatech.fidd.core.testing.FakeAnalyticsTracker
 import com.ipirangatech.fidd.core.testing.FakeCityRepository
 import com.ipirangatech.fidd.core.testing.FakeLocationProvider
 import com.ipirangatech.fidd.core.testing.testCityRanking
@@ -86,7 +87,7 @@ class RankingScreenTest {
         dark: Boolean = false,
         adBanner: (@androidx.compose.runtime.Composable () -> Unit)? = null,
     ): RankingViewModel {
-        val vm = RankingViewModel(cities, location, preferences)
+        val vm = RankingViewModel(cities, location, preferences, FakeAnalyticsTracker())
         compose.setContent {
             if (dark) {
                 MaterialTheme(colorScheme = darkColorScheme()) { RankingScreen(viewModel = vm, adBanner = adBanner) }

@@ -21,3 +21,4 @@ ml/data/raw_export.json
 
 # Release bundles/APKs gerados localmente para a Play Store.
 /app/release/
+/app/google-services.json

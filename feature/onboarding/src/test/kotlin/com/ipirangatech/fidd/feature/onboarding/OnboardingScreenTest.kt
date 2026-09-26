@@ -17,31 +17,33 @@ class OnboardingScreenTest {
     val compose = createComposeRule()
 
     private val app: Application = ApplicationProvider.getApplicationContext()
-    private var finished = 0
+
+    // Um item por término; true = saiu pelo "Pular".
+    private val finishes = mutableListOf<Boolean>()
 
     private fun str(id: Int) = app.getString(id)
 
     @Test
     fun `next walks through every page and the last button finishes`() {
-        compose.setContent { OnboardingScreen(onFinish = { finished++ }) }
+        compose.setContent { OnboardingScreen(onFinish = { finishes += it }) }
 
         compose.onNodeWithText(str(R.string.onboarding_page1_title)).assertExists()
         compose.onNodeWithText(str(R.string.onboarding_next)).performClick()
         compose.onNodeWithText(str(R.string.onboarding_page2_title)).assertExists()
         compose.onNodeWithText(str(R.string.onboarding_next)).performClick()
         compose.onNodeWithText(str(R.string.onboarding_page3_title)).assertExists()
-        assertEquals(0, finished)
+        assertEquals(emptyList<Boolean>(), finishes)
 
         compose.onNodeWithText(str(R.string.onboarding_start)).performClick()
-        assertEquals(1, finished)
+        assertEquals(listOf(false), finishes)
     }
 
     @Test
     fun `skip finishes right away`() {
-        compose.setContent { OnboardingScreen(onFinish = { finished++ }) }
+        compose.setContent { OnboardingScreen(onFinish = { finishes += it }) }
 
         compose.onNodeWithText(str(R.string.onboarding_skip)).performClick()
 
-        assertEquals(1, finished)
+        assertEquals(listOf(true), finishes)
     }
 }

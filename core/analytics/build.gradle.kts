@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.ipirangatech.fidd.core.sensor"
+    namespace = "com.ipirangatech.fidd.core.analytics"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
@@ -21,26 +21,22 @@ android {
     }
 }
 
+// Isola o SDK do Firebase: features e outros core enxergam só AnalyticsTracker/AnalyticsEvent
+// (implementation, não api), então não conseguem mandar para o Analytics nada fora dos eventos
+// tipados daqui.
 dependencies {
+    implementation(libs.firebase.analytics)
     implementation(libs.hilt.android)
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(project(":core:analytics"))
-    implementation(project(":core:location"))
+    implementation(platform(libs.firebase.bom))
     implementation(project(":core:model"))
 
     ksp(libs.hilt.compiler)
 
-    kspTest(libs.hilt.compiler)
-
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)
-    testImplementation(libs.hilt.android.testing)
     testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
     testImplementation(libs.robolectric)
-    testImplementation(libs.turbine)
-    testImplementation(project(":core:testing"))
 }
 
 kover {
